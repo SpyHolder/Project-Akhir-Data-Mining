@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evaluasi Metrik | Telemetri Prediksi Dropping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="top"></div>
+<main id="main" class="shell workspace">
+
+  <!-- Tabel Perbandingan Metrik Evaluasi -->
+  <section class="panel panel-focal" aria-label="Tabel perbandingan metrik evaluasi">
+    <div class="panel-head">
+      <h2>Perbandingan Metrik Akurasi Seluruh Model (Data Uji Agustus 2026)</h2>
+      <span class="font-mono text-muted">n = 1.908 jadwal dropping uji</span>
+    </div>
+    <div class="table-wrap"><table id="tb-metrics"></table></div>
+    <p class="panel-note">
+      <strong>Catatan:</strong> MAE dan RMSE dinyatakan dalam satuan barang per kunjungan (semakin kecil semakin akurat). Toleransi &plusmn;5 barang menunjukkan persentase prediksi yang meleset tidak lebih dari 5 barang dari realisasi penjualan aktual.
+    </p>
+  </section>
+
+  <!-- 2 Grafik Utama: Galat & Overfitting -->
+  <section class="grid-2" aria-label="Grafik perbandingan galat dan stabilitas">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Perbandingan MAE dan RMSE (Galat Prediksi)</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-mae" role="img" aria-label="Grafik batang perbandingan MAE dan RMSE"></canvas></div>
+      <p class="panel-note">Linear Regression (dengan 6 fitur terseleksi bebas bias bulan) menghasilkan galat MAE terendah (<strong>6.08 pcs</strong>) mengungguli Baseline dan model pohon.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Evaluasi Overfitting: Data Latih (Jun-Jul) vs Data Uji (Agustus)</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-over" role="img" aria-label="Grafik batang perbandingan MAE Train terhadap MAE Test"></canvas></div>
+      <p class="panel-note">Random Forest mengalami penurunan performa tajam (overfitting), sedangkan Linear Regression paling konsisten antara data latih dan data uji.</p>
+    </div>
+  </section>
+
+  <!-- Temuan Inti untuk Presentasi -->
+  <section id="insight" class="panel" aria-label="Temuan evaluasi dan kesimpulan"></section>
+
+</main>
+<div id="foot"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="data.js?v=633_v2"></script>
+<script src="common.js?v=633_v2"></script>
+<script>
+layout(
+  "evaluasi.html",
+  "Evaluasi Komparatif Model & Pengujian Galat",
+  "Pengujian komprehensif terhadap Baseline, Linear Regression, Random Forest, dan Gradient Boosting pada data uji Agustus 2026."
+);
+
+if (D) {
+  const keys = [...MODELS, "Baseline (roll-3)", "Baseline (lag-1)"];
+  const bm = {};
+  ["MAE", "RMSE", "MAPE"].forEach(k => { bm[k] = Math.min(...keys.map(m => R[m][k])); });
+  bm.R2 = Math.max(...keys.map(m => R[m].R2));
+
+  table(
+    "tb-metrics",
+    ["Model", "MAE", "RMSE", "MAPE (%)", "R²", "Bias", "Toleransi ±5 Pcs", "Status Evaluasi"],
+    keys.map(m => {
+      const r = R[m];
+      const mark = (k, v) => r[k] === bm[k] ? `<span class="text-best">${v}</span><span class="badge-best">Terbaik</span>` : v;
+      const diff = r.improve_vs_baseline;
+      const statusLabel = m === "Linear Regression"
+        ? `<strong class="text-best">+${fmt(diff)}% Lebih Akurat vs Baseline</strong>`
+        : (m === "Baseline" ? `<span class="text-muted">Acuan Standar</span>` : `<span class="text-muted">${diff > 0 ? "+" + fmt(diff) + "%" : fmt(diff) + "%"}</span>`);
+
+      return [
+        `<strong>${m}</strong>`,
+        mark("MAE", fmt(r.MAE) + " pcs"),
+        mark("RMSE", fmt(r.RMSE) + " pcs"),
+        mark("MAPE", fmt(r.MAPE) + "%"),
+        mark("R2", fmt(r.R2, 4)),
+        fmt(r.bias),
+        fmt(r.within5, 1) + "%",
+        statusLabel
+      ];
+    }),
+    r => r[0].includes(best) && !r[0].includes("lag-1") ? "best" : ""
+  );
+
+  let charts = [];
+  const renderCharts = () => {
+    charts.forEach(c => c && c.destroy());
+    charts = [];
+    
+    // 1. Chart MAE & RMSE
+    charts.push(bar("c-mae", MODELS, [
+      { label: "MAE (Rata-rata Galat)", data: MODELS.map(m => R[m].MAE), backgroundColor: COL.Aktual },
+      { label: "RMSE (Standar Deviasi Galat)", data: MODELS.map(m => R[m].RMSE), backgroundColor: COL["Gradient Boosting"] }
+    ], {
+      scales: { y: { title: { display: true, text: "Barang per Kunjungan (pcs)" } } }
+    }));
+
+    // 2. Chart Overfitting Train vs Test
+    charts.push(bar("c-over", MODELS, [
+      { label: "MAE Data Latih (Jun-Jul)", data: MODELS.map(m => R[m].MAE_train), backgroundColor: COL.Baseline },
+      { label: "MAE Data Uji (Agustus)", data: MODELS.map(m => R[m].MAE), backgroundColor: COL["Linear Regression"] }
+    ], {
+      scales: { y: { title: { display: true, text: "MAE (pcs)" } } }
+    }));
+  };
+
+  renderCharts();
+  window.onThemeChange = renderCharts;
+
+  $("insight").innerHTML = `
+    <div class="panel-head"><h2>Kesimpulan Evaluasi &amp; Pilihan Model Terbaik</h2></div>
+    <ul class="clean-list">
+      <li><strong>Model Terbaik: Linear Regression</strong> berhasil mencapai galat uji terendah dengan MAE <span class="num">${fmt(R[best].MAE)} pcs</span> dan R² <span class="num">${fmt(R[best].R2, 4)}</span>, mengungguli Baseline dan algoritma lainnya.</li>
+      <li><strong>Alasan Kemenangan Linear Regression</strong>: Penggunaan 6 fitur inti yang bebas dari bias tren bulan membuat bobot regresi linier fokus pada relasi proporsional antara riwayat serapan (<code>rate_lag1</code>, <code>terjual_roll3</code>) dan kuota kirim sebelumnya.</li>
+      <li><strong>Fenomena Overfitting pada Random Forest</strong>: Random Forest menghafal data latih terlalu dalam (MAE latih <span class="num">${fmt(R["Random Forest"].MAE_train)}</span>), namun saat diuji pada data Agustus galatnya membengkak menjadi <span class="num">${fmt(R["Random Forest"].MAE)}</span>.</li>
+    </ul>`;
+}
+</script>
+</body>
+</html>

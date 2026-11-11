@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kualitas &amp; Pembagian Data | Telemetri Prediksi Dropping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="top"></div>
+<main id="main" class="shell workspace">
+  <section aria-label="Metrik volume pembersihan data" id="kpi" class="kpi-grid"></section>
+
+  <section class="split-2-1" aria-label="Alur penyaringan dan aturan fitur">
+    <div class="panel panel-focal">
+      <div class="panel-head">
+        <h2 id="flow-title">Alur Seleksi Outlet &amp; Pembagian Data</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-flow" role="img" aria-label="Grafik batang jumlah outlet pada setiap tahap pembersihan data"></canvas></div>
+      <ul id="li-drop" class="clean-list" style="margin-top: 0.85rem;"></ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Pembagian Sheet Data Bersih &amp; Fitur per Algoritma</h2>
+      </div>
+      <div id="feat" style="margin-bottom: 1rem;"></div>
+      <div class="state-box">
+        <h3>Struktur 2 File &amp; Pencegahan Data Leakage</h3>
+        <p class="text-muted">Dari <strong>Data Mentah</strong> langsung diolah ke <code>dataset_siap_modeling.xlsx</code>: sheet <code>dataset_model</code> menyimpan hasil <em>data cleaning</em> murni tanpa fitur tambahan, sedangkan fitur prediktor dipisah ke 3 sheet algoritma (<code>model_lr</code>, <code>model_rf</code>, <code>model_gb</code>). Kolom <code>jumlah_barang</code> minggu berjalan tidak dijadikan fitur dan diganti oleh <code>jb_lag1</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Proporsi pembagian data latih dan uji">
+    <div class="panel-head">
+      <h2>Proporsi Baris Fitur Lengkap pada Periode Latih (Juni-Juli) vs Periode Uji (Agustus 2026)</h2>
+    </div>
+    <div class="chart-box" style="height: 180px;"><canvas id="c-split" role="img" aria-label="Grafik batang bertumpuk proporsi baris lengkap"></canvas></div>
+    <p id="p-split" class="panel-note" style="margin-top: 0.5rem;"></p>
+  </section>
+
+  <section class="panel panel-focal" aria-label="Diagram outlier termasuk outlet HB">
+    <div class="panel-head">
+      <h2>Deteksi Outlier: Outlet HB Dibandingkan dengan Outlet Reguler</h2>
+      <span class="font-mono text-muted">Rata-rata per outlet (Juni-Agustus 2026)</span>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="chart-box" style="height: 320px;"><canvas id="c-out-scatter" role="img" aria-label="Sebaran rata-rata dropping dan terjual per outlet, outlet HB ditandai"></canvas></div>
+      </div>
+      <div>
+        <div class="chart-box" style="height: 320px;"><canvas id="c-out-top" role="img" aria-label="10 outlet dengan rata-rata terjual tertinggi termasuk HB"></canvas></div>
+      </div>
+    </div>
+    <p id="p-outlier" class="panel-note" style="margin-top: 0.75rem;"></p>
+  </section>
+</main>
+<div id="foot"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="data.js?v=633_v2"></script>
+<script src="common.js?v=633_v2"></script>
+<script>
+layout(
+  "data.html",
+  "Kualitas Data, Struktur Sheet Algoritma, dan Pembagian Waktu",
+  "Alur 2 tahap berkas (Data Mentah -> Dataset Siap Modeling): hasil pembersihan data murni di sheet dataset_model, 156 data dihapus (anomali, duplikat, dan outlier HB), serta 3 sheet fitur per algoritma."
+);
+
+if (D) {
+  const nDel = P.outlet_dihapus;
+  $("flow-title").innerHTML = `Alur Seleksi Outlet &amp; Pembagian Data: ${P.outlet_semua} Outlet Mentah &rarr; ${nDel} Dihapus &rarr; ${P.outlet_model} Siap Model`;
+  $("kpi").innerHTML = kpiHTML([
+    ["Total Outlet Mentah", `${P.outlet_semua} outlet`, `Dari 6 file data mentah (${P.mentah.toLocaleString("id-ID")} baris transaksi)`],
+    ["Outlet Dihapus", `${nDel} outlet`, `146 luar seleksi + 9 duplikat + 1 outlier HB (${P.dihapus.toLocaleString("id-ID")} baris)`],
+    ["Outlet Masuk Model", `${P.outlet_model} outlet`, `Data bersih reguler (${P.model_utama.toLocaleString("id-ID")} baris transaksi)`],
+    ["Data Latih (Jun-Jul)", `${P.train_lengkap.toLocaleString("id-ID")} baris`, `${P.outlet_model} outlet — fitur lengkap siap training`],
+    ["Data Uji (Agustus)", `${P.test_lengkap.toLocaleString("id-ID")} baris`, `${P.outlet_model} outlet — evaluasi akurasi model`]
+  ], 2);
+
+  $("li-drop").innerHTML = `
+    <li><strong>Total Outlet Mentah</strong>: <span class="num">${P.outlet_semua}</span> outlet dari 6 file Excel (${P.mentah.toLocaleString("id-ID")} baris transaksi).</li>
+    <li><strong>Outlet Dihapus (Pembersihan Data)</strong>: <span class="num">${nDel}</span> outlet (${P.dihapus.toLocaleString("id-ID")} baris transaksi) dikeluarkan dari model, terdiri dari:
+      <ul style="margin: 0.35rem 0 0.35rem 1.25rem; font-size: 0.85rem; color: var(--text-muted); list-style: disc;">
+        <li><strong>146 outlet</strong> di luar seleksi rujukan (1.205 baris transaksi).</li>
+        <li><strong>9 outlet</strong> anomali duplikat / tanggal ganda (103 baris transaksi).</li>
+        <li><strong>1 outlet</strong> outlier grosir HB (14 baris transaksi, volume penjualan rata-rata ~8&times; median).</li>
+      </ul>
+    </li>
+    <li><strong>Outlet Reguler Masuk Model</strong>: <span class="num">${P.outlet_model}</span> outlet aktif (${P.model_utama.toLocaleString("id-ID")} baris transaksi bersih).</li>
+    <li><strong>Data Latih (Train) Fitur Lengkap</strong>: <span class="num">${P.train_lengkap.toLocaleString("id-ID")}</span> baris transaksi periode Juni - Juli 2026.</li>
+    <li><strong>Data Uji (Test) Fitur Lengkap</strong>: <span class="num">${P.test_lengkap.toLocaleString("id-ID")}</span> baris transaksi periode Agustus 2026.</li>
+  `;
+  $("p-split").textContent = D.meta.split;
+  const mf = D.meta.model_features || {};
+  const ms = D.meta.model_sheets || {};
+  $("feat").innerHTML = ["Linear Regression", "Random Forest", "Gradient Boosting"].map(m => `
+    <div style="margin-bottom: 0.65rem;">
+      <div class="font-mono" style="font-size: 0.8rem; margin-bottom: 0.25rem; color: var(--accent);">
+        <strong>${m}</strong> — Sheet <code>${ms[m] || "-"}</code> (${(mf[m] || D.meta.features).length} fitur)
+      </div>
+      <div class="chip-row">${(mf[m] || D.meta.features).map(f => `<span class="tag-static">${f}</span>`).join("")}</div>
+    </div>
+  `).join("");
+
+  let charts = [];
+  const renderCharts = () => {
+    charts.forEach(c => c && c.destroy());
+    charts = [];
+    charts.push(bar(
+      "c-flow",
+      ["Total Outlet\nMentah", "Outlet\nDihapus", "Outlet Masuk\nModel", "Data Latih\n(baris)", "Data Uji\n(baris)"],
+      [{
+        data: [P.outlet_semua, P.outlet_dihapus, P.outlet_model, P.train_lengkap, P.test_lengkap],
+        backgroundColor: [COL.Baseline, "#ef4444", COL["Random Forest"], "#38bdf8", "#c084fc"]
+      }],
+      {
+        plugins: { legend: { display: false } },
+        scales: { y: { title: { display: true, text: "Jumlah" } } }
+      }
+    ));
+    charts.push(bar(
+      "c-split",
+      ["Train (Jun-Jul)", "Test (Agustus)"],
+      [
+        { label: "Fitur lengkap (dipakai)", data: [P.train_lengkap, P.test_lengkap], backgroundColor: COL["Random Forest"] },
+        { label: "Lag belum lengkap (minggu awal)", data: [P.train_all - P.train_lengkap, P.test_all - P.test_lengkap], backgroundColor: COL.Baseline }
+      ],
+      { indexAxis: "y", scales: { x: { stacked: true }, y: { stacked: true } } }
+    ));
+    const O = D.outlier;
+    if (O) {
+      charts.push(mk("c-out-scatter", {
+        type: "scatter",
+        data: { datasets: [
+          { label: `Outlet reguler (${O.stats.n_model})`, data: O.model.map(v => ({ x: v[0], y: v[1] })), backgroundColor: COL.Aktual + "99", pointRadius: 3 },
+          { label: "Outlet HB (outlier dihapus)", data: O.hb.map(v => ({ x: v[1], y: v[2] })), backgroundColor: "#ef4444", pointRadius: 9, pointStyle: "rectRot" }
+        ] },
+        options: {
+          scales: {
+            x: { title: { display: true, text: "Rata-rata jumlah dropping per minggu (pcs)" } },
+            y: { title: { display: true, text: "Rata-rata terjual per minggu (pcs)" } }
+          }
+        }
+      }));
+      charts.push(bar(
+        "c-out-top",
+        O.top.labels,
+        [{ label: "Rata-rata terjual (pcs)", data: O.top.values,
+           backgroundColor: O.top.is_hb.map(h => h ? "#ef4444" : COL["Random Forest"]) }],
+        { indexAxis: "y", plugins: { legend: { display: false } },
+          scales: { x: { title: { display: true, text: "Rata-rata terjual per minggu (pcs)" } } } }
+      ));
+      $("p-outlier").innerHTML = `Median rata-rata terjual outlet reguler <strong>${fmt(O.stats.median, 1)} pcs</strong>; batas outlier (Q3 + 1,5 &times; IQR) <strong>${fmt(O.stats.fence, 1)} pcs</strong>. Outlet <strong>HB</strong> rata-rata <strong>${fmt(O.stats.hb_mean, 1)} pcs</strong> (&asymp; ${fmt(O.stats.hb_ratio, 1)}&times; median) sehingga jauh melewati batas dan dimasukkan ke daftar <strong>outlet dihapus</strong> agar tidak mendistorsi model. Hanya ${O.stats.n_model_over_fence} dari ${O.stats.n_model} outlet reguler yang berada di atas batas tersebut.`;
+    }
+  };
+  renderCharts();
+  window.onThemeChange = renderCharts;
+}
+</script>
+</body>
+</html>

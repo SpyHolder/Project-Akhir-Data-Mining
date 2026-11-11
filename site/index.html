@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan Eksekutif | Telemetri Prediksi Dropping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="top"></div>
+<main id="main" class="shell workspace">
+  <section aria-label="Metrik kunci pengujian" id="kpi" class="kpi-grid"></section>
+
+  <section class="split-2-1" aria-label="Peringkat galat dan temuan utama">
+    <div class="panel panel-focal">
+      <div class="panel-head">
+        <h2>Model mana yang menghasilkan galat prediksi (MAE) paling rendah pada Agustus 2026?</h2>
+        <span class="font-mono text-muted">Satuan: barang per dropping</span>
+      </div>
+      <div class="chart-box"><canvas id="c-rank" role="img" aria-label="Grafik batang perbandingan MAE empat model"></canvas></div>
+      <p class="panel-note">Nilai MAE lebih rendah menunjukkan rata-rata meleset (dalam jumlah barang) yang lebih kecil terhadap penjualan aktual di seluruh outlet pengujian.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Ringkasan Keputusan Evaluasi</h2>
+      </div>
+      <ul id="finding" class="clean-list"></ul>
+      <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+        <a href="prediksi.html" class="btn-control" style="width: 100%; text-decoration: none; border-color: var(--accent); color: var(--accent);">
+          Buka Grafik Prediksi &amp; Uji Akurasi Outlet
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="Modul eksplorasi lanjutan">
+    <div class="panel-head">
+      <h2>Modul Analisis dan Diagnostik</h2>
+    </div>
+    <div id="links" class="grid-3"></div>
+  </section>
+</main>
+<div id="foot"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="data.js?v=633_v2"></script>
+<script src="common.js?v=633_v2"></script>
+<script>
+layout(
+  "index.html",
+  "Peramalan Penjualan Dropping Ke Depan & Perbandingan Model",
+  "Prediksi penjualan barang 8 minggu ke depan (September - Oktober 2026) untuk 18 outlet sampel data asli menggunakan Baseline, Linear Regression, Random Forest, dan Gradient Boosting."
+);
+
+if (D) {
+  const futRows = D.future || [];
+  const om = D.outlet_meta || [];
+  let totTerjual = 0, totDrop = 0, totSisa = 0;
+  futRows.forEach(r => {
+    const y = Math.max(0, Number(r[4]) || 0); // r[4] adalah Linear Regression (model terbaik)
+    const rate = (om[r[1]] && om[r[1]][3]) ? om[r[1]][3] : 0.626;
+    const d = Math.max(10, Math.ceil(Math.max(y, 1) * 1.10 / 10) * 10, Math.round((Math.max(y, 1) / Math.max(rate, 0.35)) / 10) * 10);
+    totTerjual += y;
+    totDrop += d;
+    totSisa += Math.max(0, d - y);
+  });
+
+  $("kpi").innerHTML = kpiHTML([
+    ["1. Prediksi Terjual (Sep - Okt)", `${fmt(totTerjual, 0)} barang`, `${om.length} outlet sampel (${fmt(futRows.length, 0)} jadwal dropping)`],
+    ["2. Hitung Total Dropping", `${fmt(totDrop, 0)} barang`, "Dihitung otomatis dari prediksi terjual"],
+    ["3. Hitung Total Sisa", `${fmt(totSisa, 0)} barang`, "Total Dropping dikurangi Prediksi Terjual"],
+    ["Galat Uji Terendah (MAE)", `${fmt(R[best].MAE)} barang`, `Algoritma Terbaik: ${best} (R²: ${fmt(R[best].R2, 4)})`]
+  ], 0);
+
+  let rankChart = null;
+  const drawRank = () => {
+    if (rankChart) rankChart.destroy();
+    const ms = [...MODELS].sort((a, b) => R[a].MAE - R[b].MAE);
+    rankChart = bar("c-rank", ms, [{
+      label: "MAE (barang)",
+      data: ms.map(m => R[m].MAE),
+      backgroundColor: ms.map(m => COL[m])
+    }], {
+      indexAxis: "y",
+      plugins: { legend: { display: false } },
+      scales: { x: { title: { display: true, text: "Mean Absolute Error (barang)" } } }
+    });
+  };
+  drawRank();
+  window.onThemeChange = drawRank;
+
+  $("finding").innerHTML = `
+    <li>Galat absolut terendah dicapai oleh <strong class="text-best">${best}</strong> dengan MAE <span class="num">${fmt(R[best].MAE)} pcs</span> dan R² <span class="num">${fmt(R[best].R2, 4)}</span>.</li>
+    <li>Linear Regression mengungguli Baseline sebesar <strong class="text-accent">+${fmt(R["Linear Regression"].improve_vs_baseline)}%</strong> berkat seleksi 6 fitur inti yang bebas dari bias tren bulan.</li>
+    <li>Baseline (rata-rata historis biasa / Mean Statis) menjadi tolak ukur benchmark standar (MAE <span class="num">${fmt(R.Baseline.MAE)} pcs</span>) untuk membuktikan peningkatan akurasi model machine learning.</li>
+    <li>Random Forest mengalami overfitting: MAE pada data latih sangat rendah (<span class="num">${fmt(R["Random Forest"].MAE_train)}</span>) namun melonjak menjadi <span class="num">${fmt(R["Random Forest"].MAE)}</span> pada data uji.</li>
+  `;
+
+  const desc = {
+    "eda.html": ["Eksplorasi Data (EDA)", "Pola penjualan mingguan, kesenjangan kuota dropping vs terjual, serta korelasi fitur historis."],
+    "data.html": ["Kualitas & Struktur Data", "Alur penyaringan data mentah, pemisahan outlier HB, dan pembagian sheet fitur per algoritma."],
+    "model.html": ["Konfigurasi Model & Fitur", "Kombinasi fitur prediktor yang disesuaikan untuk masing-masing algoritma Machine Learning."],
+    "evaluasi.html": ["Evaluasi Metrik Akurasi", "Perbandingan MAE, RMSE, MAPE, R², dan pengujian ketahanan overfitting model."],
+    "prediksi.html": ["Prediksi & Uji Akurasi", "Visualisasi 3 fase: Data Latih, Uji Akurasi (Agustus), dan Proyeksi Masa Depan (September - Oktober 2026)."]
+  };
+
+  $("links").innerHTML = PAGES.slice(1).map(([h, l]) => `
+    <a href="${h}" class="panel navcard">
+      <div>
+        <h3>${desc[h][0]}</h3>
+        <p class="panel-note">${desc[h][1]}</p>
+      </div>
+      <span class="navcard-action">Buka halaman ${l}</span>
+    </a>`).join("");
+}
+</script>
+</body>
+</html>

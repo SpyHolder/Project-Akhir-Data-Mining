@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eksplorasi Data | Telemetri Prediksi Dropping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="top"></div>
+<main id="main" class="shell workspace">
+  <section class="split-2-1" aria-label="Tren mingguan dan korelasi fitur">
+    <div class="panel panel-focal">
+      <div class="panel-head">
+        <h2>Seberapa besar selisih antara total barang yang di-drop dan yang benar-benar terjual tiap minggu?</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-weekly" role="img" aria-label="Grafik garis total dropping dibandingkan total terjual per minggu"></canvas></div>
+      <p class="panel-note">Kesenjangan konsisten antara garis dropping dan terjual menunjukkan adanya ruang optimasi stok agar tidak terjadi penumpukan sisa barang.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Fitur apa yang memiliki korelasi terkuat dengan penjualan?</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-corr" role="img" aria-label="Grafik batang korelasi fitur terhadap target terjual"></canvas></div>
+      <p class="panel-note">Rata-rata bergerak 3 minggu (<code>terjual_roll3</code>) dan lag penjualan minggu lalu memimpin korelasi positif paling kuat.</p>
+    </div>
+  </section>
+
+  <section class="grid-2" aria-label="Distribusi serapan dan perbandingan wilayah">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Bagaimana sebaran tingkat serapan (sell-through rate) toko?</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-rate" role="img" aria-label="Histogram persentase sell-through rate"></canvas></div>
+      <p class="panel-note">Mayoritas outlet menyerap antara 50% hingga 80% dari total barang yang dikirim setiap minggunya.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Bagaimana perbandingan karakteristik Dalam Kota vs Luar Kota?</h2>
+      </div>
+      <div class="table-wrap">
+        <table id="tb-wil"></table>
+      </div>
+      <p class="panel-note">Outlet Luar Kota memiliki rata-rata penjualan dan kuota pengiriman yang relatif lebih besar dibanding Dalam Kota.</p>
+    </div>
+  </section>
+</main>
+<div id="foot"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="data.js?v=633_v2"></script>
+<script src="common.js?v=633_v2"></script>
+<script>
+layout(
+  "eda.html",
+  "Eksplorasi Data Penjualan Outlet (EDA)",
+  "Pola historis pengiriman barang (dropping), distribusi tingkat serapan (sell-through rate), serta korelasi antar variabel sebelum pemodelan."
+);
+
+if (D) {
+  table(
+    "tb-wil",
+    ["Wilayah", "Total Baris", "Jumlah Outlet", "Rata-rata Terjual", "Rata-rata Dropping", "Sell-Through Rate"],
+    Object.entries(E.wilayah).map(([k, v]) => [
+      `<strong>${k}</strong>`,
+      fmt(v.n, 0),
+      fmt(v.outlet, 0),
+      `${fmt(v.terjual, 1)} pcs`,
+      `${fmt(v.jb, 1)} pcs`,
+      `<strong class="text-accent">${fmt(v.rate * 100, 1)}%</strong>`
+    ])
+  );
+
+  let charts = [];
+  const renderCharts = () => {
+    charts.forEach(c => c && c.destroy());
+    charts = [];
+    
+    // 1. Grafik Mingguan
+    charts.push(mk("c-weekly", {
+      type: "line",
+      data: {
+        labels: E.weekly.labels,
+        datasets: [
+          { label: "Total barang di-drop", data: E.weekly.jumlah_barang, borderColor: COL.Baseline, borderDash: [5, 4], tension: 0.25 },
+          { label: "Total barang terjual", data: E.weekly.terjual, borderColor: COL.Aktual, backgroundColor: "rgba(56, 189, 248, 0.14)", fill: true, tension: 0.25 }
+        ]
+      }
+    }));
+
+    // 2. Grafik Korelasi Fitur
+    charts.push(bar("c-corr", E.corr.labels, [{
+      label: "Korelasi Pearson",
+      data: E.corr.values,
+      backgroundColor: E.corr.values.map(v => v >= 0 ? COL.Aktual : COL["Linear Regression"])
+    }], { indexAxis: "y", plugins: { legend: { display: false } } }));
+
+    // 3. Histogram Sell-Through Rate
+    charts.push(bar("c-rate", E.hist_rate.labels, [{
+      label: "Jumlah Transaksi",
+      data: E.hist_rate.counts,
+      backgroundColor: COL["Random Forest"]
+    }], { plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: "Frekuensi (baris)" } }, x: { title: { display: true, text: "Rentang Tingkat Serapan (%)" } } } }));
+  };
+
+  renderCharts();
+  window.onThemeChange = renderCharts;
+}
+</script>
+</body>
+</html>

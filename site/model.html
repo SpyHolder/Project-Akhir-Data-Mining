@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model &amp; Fitur | Telemetri Prediksi Dropping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="top"></div>
+<main id="main" class="shell workspace">
+  <section aria-label="Spesifikasi empat model">
+    <div class="panel-head">
+      <h2>Bagaimana spesifikasi parameter pada masing-masing model yang dibandingkan?</h2>
+    </div>
+    <div id="model-cards" class="grid-4"></div>
+  </section>
+
+  <section class="grid-3" aria-label="Tingkat kepentingan fitur dan koefisien">
+    <div class="panel panel-focal">
+      <div class="panel-head">
+        <h2>Fitur mana yang paling mendominasi keputusan Gradient Boosting?</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-imp-gb" role="img" aria-label="Grafik feature importance Gradient Boosting"></canvas></div>
+      <p class="panel-note">Rata-rata 3 minggu terakhir (<code>terjual_roll3</code>) menyumbang bobot terbesar dalam menurunkan galat pohon.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Bagaimana distribusi bobot fitur pada Random Forest?</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-imp-rf" role="img" aria-label="Grafik feature importance Random Forest"></canvas></div>
+      <p class="panel-note">Pola serupa terlihat pada Random Forest dengan konsentrasi tinggi pada <code>terjual_roll3</code>.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Seberapa besar koefisien tiap fitur pada Linear Regression?</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-imp-lr" role="img" aria-label="Grafik koefisien regresi linear"></canvas></div>
+      <p class="panel-note">Intercept model: <code id="lr-int"></code> (fitur dalam skala asli tanpa standardisasi).</p>
+    </div>
+  </section>
+</main>
+<div id="foot"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="data.js?v=633_v2"></script>
+<script src="common.js?v=633_v2"></script>
+<script>
+layout(
+  "model.html",
+  "Konfigurasi Algoritma & Bobot Fitur Prediktor",
+  "Perbandingan mekanisme kerja Baseline serta tiga algoritma Machine Learning beserta kontribusi masing-masing fitur terhadap prediksi."
+);
+
+if (D) {
+  const desc = {
+    "Baseline": "Tanpa sheet khusus: nilai acuan tolak ukur standar dihitung langsung dari rata-rata historis (Mean Statis) per outlet dari data latih (Juni - Juli).",
+    "Linear Regression": "Sheet khusus model_lr (6 fitur utama bebas bias bulan): wil_luar_kota, jb_lag1, terjual_lag1, terjual_lag2, terjual_roll3, rate_lag1.",
+    "Random Forest": "Sheet khusus model_rf (8 fitur pohon keputusan): menambahkan hari_dropping dan habis_lag1 untuk menangkap pola jadwal dan stok habis.",
+    "Gradient Boosting": "Sheet khusus model_gb (9 fitur lengkap): membangun pohon bertahap dengan seluruh fitur historis dan waktu."
+  };
+
+  $("model-cards").innerHTML = MODELS.map(m => `
+    <div class="panel ${m === bestModel ? "panel-focal" : ""}">
+      <h3 style="color:${COL[m]}">${m}</h3>
+      <p class="panel-note" style="margin-bottom:0.85rem;">${desc[m]}</p>
+      <div class="tag-static" style="width:100%; white-space:normal; word-break:break-word;">${D.params[m]}</div>
+    </div>`).join("");
+
+  $("lr-int").textContent = fmt(D.sim.lr.intercept, 3);
+
+  let charts = [];
+  const renderImp = () => {
+    charts.forEach(c => c && c.destroy());
+    charts = [];
+    const imp = (id, m) => {
+      const e = Object.entries(D.importance[m]).sort((a, b) => a[1] - b[1]);
+      charts.push(bar(
+        id,
+        e.map(x => x[0]),
+        [{ data: e.map(x => x[1]), backgroundColor: COL[m] }],
+        { indexAxis: "y", plugins: { legend: { display: false } } }
+      ));
+    };
+    imp("c-imp-gb", "Gradient Boosting");
+    imp("c-imp-rf", "Random Forest");
+    imp("c-imp-lr", "Linear Regression");
+  };
+  renderImp();
+  window.onThemeChange = renderImp;
+}
+</script>
+</body>
+</html>
