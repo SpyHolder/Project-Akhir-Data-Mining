@@ -113,12 +113,11 @@ const table = (id, head, rows, cls = () => "") => {
 };
 
 const PAGES = [
-  ["index.html", "Ringkasan"],
-  ["eda.html", "Eksplorasi Data"],
-  ["data.html", "Kualitas Data"],
-  ["model.html", "Model & Fitur"],
-  ["evaluasi.html", "Evaluasi"],
-  ["prediksi.html", "Prediksi & Uji Akurasi"]
+  ["index.html", "1. Gambaran Bisnis"],
+  ["eda.html", "2. Eksplorasi Data (EDA)"],
+  ["data.html", "3. Preprocessing Data"],
+  ["model.html", "4. Pemodelan & Fitur"],
+  ["prediksi.html", "5. Evaluasi & Prediksi"]
 ];
 
 function renderState(container, title, detail, actionLabel, onAction) {
@@ -165,7 +164,7 @@ function layout(active, title, sub) {
         <h1>${title}</h1>
         <p class="page-sub">${sub}</p>
       </div>
-      <div class="meta-tag">Historis: Jun-Agu 2026 | Prediksi: Sep-Okt 2026 (18 Outlet Sampel)</div>
+      <div class="meta-tag">Historis: Jun-Agu 2026 | Prediksi: September 2026 (18 Outlet Sampel)</div>
     </div>
   </header>`;
 
@@ -173,7 +172,7 @@ function layout(active, title, sub) {
   <footer class="site-footer">
     <div class="shell footer-inner">
       <span>Sistem Peramalan Penjualan Dropping Barang (Baseline, Linear Regression, Random Forest, Gradient Boosting)</span>
-      <span class="font-mono">Riwayat Aktual: Jun-Agu 2026 | Horizon Prediksi: Sep-Okt 2026</span>
+      <span class="font-mono">Riwayat Aktual: Jun-Agu 2026 | Horizon Prediksi: September 2026 (4 Minggu)</span>
     </div>
   </footer>`;
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ringkasan Eksekutif | Telemetri Prediksi Dropping</title>
+<title>1. Gambaran Bisnis | Telemetri Prediksi Dropping</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -31,28 +31,28 @@
       <ul id="finding" class="clean-list"></ul>
       <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border);">
         <a href="prediksi.html" class="btn-control" style="width: 100%; text-decoration: none; border-color: var(--accent); color: var(--accent);">
-          Buka Grafik Prediksi &amp; Uji Akurasi Outlet
+          Buka Papan Evaluasi &amp; Simulator Prediksi Outlet
         </a>
       </div>
     </div>
   </section>
 
-  <section aria-label="Modul eksplorasi lanjutan">
+  <section aria-label="Modul alur data mining berurutan">
     <div class="panel-head">
-      <h2>Modul Analisis dan Diagnostik</h2>
+      <h2>Alur Tahapan Penambangan Data (CRISP-DM)</h2>
     </div>
-    <div id="links" class="grid-3"></div>
+    <div id="links" class="grid-2"></div>
   </section>
 </main>
 <div id="foot"></div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="data.js?v=633_v2"></script>
-<script src="common.js?v=633_v2"></script>
+<script src="data.js?v=635"></script>
+<script src="common.js?v=635"></script>
 <script>
 layout(
   "index.html",
-  "Peramalan Penjualan Dropping Ke Depan & Perbandingan Model",
-  "Prediksi penjualan barang 8 minggu ke depan (September - Oktober 2026) untuk 18 outlet sampel data asli menggunakan Baseline, Linear Regression, Random Forest, dan Gradient Boosting."
+  "1. Gambaran Bisnis & Arsitektur Data Mining",
+  "Arsitektur peramalan penjualan dropping barang berbasis tahapan data mining (CRISP-DM) membandingkan Baseline, Linear Regression, Random Forest, dan Gradient Boosting untuk proyeksi September 2026."
 );
 
 if (D) {
@@ -69,7 +69,7 @@ if (D) {
   });
 
   $("kpi").innerHTML = kpiHTML([
-    ["1. Prediksi Terjual (Sep - Okt)", `${fmt(totTerjual, 0)} barang`, `${om.length} outlet sampel (${fmt(futRows.length, 0)} jadwal dropping)`],
+    ["1. Prediksi Terjual (September 2026)", `${fmt(totTerjual, 0)} barang`, `${om.length} outlet sampel (${fmt(futRows.length, 0)} jadwal dropping)`],
     ["2. Hitung Total Dropping", `${fmt(totDrop, 0)} barang`, "Dihitung otomatis dari prediksi terjual"],
     ["3. Hitung Total Sisa", `${fmt(totSisa, 0)} barang`, "Total Dropping dikurangi Prediksi Terjual"],
     ["Galat Uji Terendah (MAE)", `${fmt(R[best].MAE)} barang`, `Algoritma Terbaik: ${best} (R²: ${fmt(R[best].R2, 4)})`]
@@ -100,20 +100,19 @@ if (D) {
   `;
 
   const desc = {
-    "eda.html": ["Eksplorasi Data (EDA)", "Pola penjualan mingguan, kesenjangan kuota dropping vs terjual, serta korelasi fitur historis."],
-    "data.html": ["Kualitas & Struktur Data", "Alur penyaringan data mentah, pemisahan outlier HB, dan pembagian sheet fitur per algoritma."],
-    "model.html": ["Konfigurasi Model & Fitur", "Kombinasi fitur prediktor yang disesuaikan untuk masing-masing algoritma Machine Learning."],
-    "evaluasi.html": ["Evaluasi Metrik Akurasi", "Perbandingan MAE, RMSE, MAPE, R², dan pengujian ketahanan overfitting model."],
-    "prediksi.html": ["Prediksi & Uji Akurasi", "Visualisasi 3 fase: Data Latih, Uji Akurasi (Agustus), dan Proyeksi Masa Depan (September - Oktober 2026)."]
+    "eda.html": ["2. Eksplorasi Data (EDA)", "Pola distribusi penjualan, 5-number summary (Boxplot), serta korelasi fitur prediktor."],
+    "data.html": ["3. Preprocessing Data", "Pembersihan 633 data mentah: eliminasi 156 data dihapus & outlier ekstrem, menyisakan 477 outlet model."],
+    "model.html": ["4. Pemodelan & Fitur", "Rekayasa fitur lag & rolling mean, perancangan subset fitur spesifik per algoritma machine learning."],
+    "prediksi.html": ["5. Evaluasi & Prediksi", "Papan skor evaluasi akurasi data uji Agustus 2026 & simulator proyeksi 1 bulan ke depan dengan buffer dinamis."]
   };
 
   $("links").innerHTML = PAGES.slice(1).map(([h, l]) => `
     <a href="${h}" class="panel navcard">
       <div>
-        <h3>${desc[h][0]}</h3>
-        <p class="panel-note">${desc[h][1]}</p>
+        <h3>${desc[h] ? desc[h][0] : l}</h3>
+        <p class="panel-note">${desc[h] ? desc[h][1] : ""}</p>
       </div>
-      <span class="navcard-action">Buka halaman ${l}</span>
+      <span class="navcard-action">Buka tahapan ${l}</span>
     </a>`).join("");
 }
 </script>

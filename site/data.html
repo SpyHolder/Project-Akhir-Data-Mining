@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kualitas &amp; Pembagian Data | Telemetri Prediksi Dropping</title>
+<title>3. Preprocessing Data | Telemetri Prediksi Dropping</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -61,13 +61,13 @@
 </main>
 <div id="foot"></div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="data.js?v=633_v2"></script>
-<script src="common.js?v=633_v2"></script>
+<script src="data.js?v=635"></script>
+<script src="common.js?v=635"></script>
 <script>
 layout(
   "data.html",
-  "Kualitas Data, Struktur Sheet Algoritma, dan Pembagian Waktu",
-  "Alur 2 tahap berkas (Data Mentah -> Dataset Siap Modeling): hasil pembersihan data murni di sheet dataset_model, 156 data dihapus (anomali, duplikat, dan outlier HB), serta 3 sheet fitur per algoritma."
+  "3. Preprocessing Data & Seleksi Outlet",
+  "Tahapan pembersihan data mentah (data cleaning), penanganan anomali/duplikat, eliminasi outlier ekstrem HB, serta pembagian data latih (Jun-Jul) dan data uji (Agustus)."
 );
 
 if (D) {

@@ -69,6 +69,26 @@ def hist(series, bins):
     return {"labels": [f"{int(e[i])}-{int(e[i + 1])}" for i in range(len(c))], "counts": c.tolist()}
 
 
+def box_summary(series):
+    q1 = float(np.percentile(series, 25))
+    med = float(np.percentile(series, 50))
+    q3 = float(np.percentile(series, 75))
+    iqr = q3 - q1
+    lower_fence = max(float(series.min()), q1 - 1.5 * iqr)
+    upper_fence = min(float(series.max()), q3 + 1.5 * iqr)
+    return {
+        "min": float(series.min()),
+        "q1": round(q1, 1),
+        "median": round(med, 1),
+        "q3": round(q3, 1),
+        "max": float(series.max()),
+        "iqr": round(iqr, 1),
+        "lower_fence": round(lower_fence, 1),
+        "upper_fence": round(upper_fence, 1),
+        "mean": round(float(series.mean()), 1),
+    }
+
+
 def main():
     if NEW_SRC.exists():
         try:
@@ -167,6 +187,11 @@ def main():
         "scatter_jb": [[int(a), int(b)] for a, b in
                        df[["jumlah_barang", "terjual"]].sample(700, random_state=SEED).values],
         "habis": int(df.habis.sum()),
+        "boxplot": {
+            "all": box_summary(df[TARGET]),
+            "dalam_kota": box_summary(df[df["wilayah"] == "DALAM KOTA"][TARGET]),
+            "luar_kota": box_summary(df[df["wilayah"] == "LUAR KOTA"][TARGET]),
+        },
     }
 
     # ---------- model per sheet (BAB IV) & evaluasi (BAB V) ----------
@@ -359,7 +384,7 @@ def main():
         return float(max(10.0, min_drop, rate_drop))
 
     future_rows = []
-    for step in range(0, 8):
+    for step in range(0, 4):
         step_oids = []
         step_dates = []
         X_step = {m: [] for m in MODELS if m != "Baseline"}
@@ -425,7 +450,7 @@ def main():
     out = {
         "meta": {"features": FEATURES, "model_features": MODEL_FEATURES, "model_sheets": MODEL_SHEETS,
                  "target": TARGET, "best": best, "seed": SEED,
-                 "n_features": len(FEATURES), "split": "Train: 1 Jun-31 Jul 2026 | Test: Agustus 2026 | Forecast: Sep-Okt 2026",
+                 "n_features": len(FEATURES), "split": "Train: 1 Jun-31 Jul 2026 | Test: Agustus 2026 | Forecast: September 2026 (1 Bulan)",
                  "kamus": [[str(c) for c in row[:4]] for row in kamus.values[1:24] if str(row[0]) != "nan"]},
         "prep": prep, "eda": eda, "results": res, "importance": importance, "by_wilayah": by_wil,
         "by_week": by_week, "by_vol": by_vol, "scatter": scatter,

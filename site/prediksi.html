@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Prediksi &amp; Uji Akurasi | Telemetri Prediksi Dropping</title>
+<title>5. Evaluasi &amp; Prediksi | Telemetri Prediksi Dropping</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,43 +13,91 @@
 <div id="top"></div>
 <main id="main" class="shell workspace">
 
-  <!-- Panel Pemilihan Outlet & Model -->
-  <section class="panel panel-focal" aria-label="Kontrol pemilihan outlet dan model">
+  <!-- ========================================== -->
+  <!-- BAGIAN 1: EVALUASI AKURASI SELURUH MODEL   -->
+  <!-- ========================================== -->
+  <section class="panel panel-focal" aria-label="Tabel perbandingan metrik evaluasi">
     <div class="panel-head">
-      <h2>Pilih Outlet Sampel &amp; Model Evaluasi</h2>
-      <span id="outlet-badge" class="font-mono text-accent">18 Outlet Data Asli</span>
+      <h2>Papan Skor Evaluasi Akurasi Seluruh Model (Data Uji Agustus 2026)</h2>
+      <span class="font-mono text-muted">n = 1.906 jadwal dropping uji (477 outlet model)</span>
     </div>
-    <div class="grid-2">
+    <div class="table-wrap"><table id="tb-metrics"></table></div>
+    <p class="panel-note">
+      <strong>Catatan Evaluasi:</strong> MAE dan RMSE dinyatakan dalam satuan barang per kunjungan (semakin kecil semakin akurat). Toleransi &plusmn;5 barang menunjukkan persentase prediksi yang meleset tidak lebih dari 5 barang dari realisasi penjualan aktual.
+    </p>
+  </section>
+
+  <!-- 2 Grafik Utama: Galat & Overfitting -->
+  <section class="grid-2" aria-label="Grafik perbandingan galat dan stabilitas">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Perbandingan MAE dan RMSE (Galat Prediksi)</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-mae" role="img" aria-label="Grafik batang perbandingan MAE dan RMSE"></canvas></div>
+      <p class="panel-note">Linear Regression (dengan 6 fitur terseleksi bebas bias tren bulan) menghasilkan galat MAE terendah (<strong>6.08 pcs</strong>) mengungguli Baseline dan model pohon.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Evaluasi Overfitting: Data Latih (Jun-Jul) vs Data Uji (Agustus)</h2>
+      </div>
+      <div class="chart-box"><canvas id="c-over" role="img" aria-label="Grafik batang perbandingan MAE Train terhadap MAE Test"></canvas></div>
+      <p class="panel-note">Random Forest mengalami penurunan performa tajam (overfitting), sedangkan Linear Regression paling konsisten antara data latih dan data uji.</p>
+    </div>
+  </section>
+
+  <!-- Temuan Inti Evaluasi -->
+  <section id="insight" class="panel" aria-label="Temuan evaluasi dan kesimpulan"></section>
+
+  <!-- ========================================== -->
+  <!-- BAGIAN 2: SIMULATOR PREDIKSI INTERAKTIF    -->
+  <!-- ========================================== -->
+  <section class="panel panel-focal" aria-label="Kontrol simulator prediksi outlet">
+    <div class="panel-head">
+      <h2>Simulator Prediksi &amp; Rekomendasi Dropping (September 2026 - 1 Bulan Ke Depan)</h2>
+      <span id="outlet-badge" class="font-mono text-accent">18 Outlet Sampel Data Asli</span>
+    </div>
+    <div class="grid-3" style="align-items: flex-end;">
       <div class="field">
         <label for="sel-outlet">Pilih Outlet (Sampel Data Asli)</label>
         <select id="sel-outlet" style="font-size: 1rem; font-weight: 600;"></select>
       </div>
       <div class="field">
-        <label for="sel-model">Pilih Algoritma Prediksi (Dibandingkan vs Baseline)</label>
+        <label for="sel-model">Pilih Algoritma Prediksi (vs Baseline)</label>
         <select id="sel-model" style="font-size: 1rem; font-weight: 600;">
           <option value="Linear Regression" selected>Linear Regression (Model Terbaik - MAE 6.08)</option>
           <option value="Gradient Boosting">Gradient Boosting (MAE 6.56)</option>
           <option value="Random Forest">Random Forest (MAE 6.62)</option>
         </select>
       </div>
+      <div class="field">
+        <label for="rng-buffer" id="lbl-buffer">Buffer Cadangan Stok: +10%</label>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <input type="range" id="rng-buffer" min="5" max="30" step="5" value="10" style="flex: 1; cursor: pointer;">
+          <span id="txt-buffer" class="font-mono text-accent" style="font-weight: 700; min-width: 3rem;">+10%</span>
+        </div>
+      </div>
     </div>
+    <p class="panel-note" style="margin-top: 0.65rem;">
+      <strong>Kontrol Interaktif:</strong> Geser slider buffer stok untuk menyesuaikan batas aman cadangan barang dropping (5% - 30%). Rekomendasi kuota dropping mingguan di bawah akan langsung dihitung ulang secara otomatis.
+    </p>
   </section>
 
   <!-- Metrik Kunci Outlet Terpilih -->
   <section id="outlet-kpi" class="kpi-grid" aria-label="Ringkasan metrik outlet terpilih"></section>
 
-  <!-- Grafik Deret Waktu Terpadu: Latih -> Uji Akurasi (Agustus) -> Prediksi Masa Depan (Sep-Okt) -->
+  <!-- Grafik Deret Waktu Terpadu: Latih -> Uji Akurasi (Agustus) -> Prediksi 1 Bulan (September) -->
   <section class="panel panel-focal" aria-label="Grafik perjalanan riwayat dan prediksi">
     <div class="panel-head">
-      <h2 id="chart-title">Grafik Evaluasi Akurasi Uji (Agustus) &amp; Prediksi Masa Depan (Sep - Okt 2026)</h2>
-      <span class="font-mono text-muted">Latih (Jun-Jul) &rarr; Uji Akurasi (Agu) &rarr; Masa Depan (Sep-Okt)</span>
+      <h2 id="chart-title">Grafik Evaluasi Akurasi Uji (Agustus) &amp; Prediksi Masa Depan (September 2026)</h2>
+      <span class="font-mono text-muted">Latih (Jun-Jul) &rarr; Uji Akurasi (Agu) &rarr; Proyeksi 1 Bulan (September 2026)</span>
     </div>
     <div class="chart-box-tall" style="height: 420px;"><canvas id="c-timeline" role="img" aria-label="Grafik deret waktu terpadu"></canvas></div>
     <p class="panel-note" id="chart-note">
       Garis vertikal membatasi 3 fase: 
       <strong>1. Data Latih (Juni-Juli)</strong> &rarr; 
       <strong>2. Uji Akurasi (Agustus)</strong>: menyandingkan penjualan aktual dengan hasil tebakan model pada data uji &rarr; 
-      <strong>3. Proyeksi Masa Depan (September-Oktober)</strong>: peramalan penjualan dan rekomendasi dropping barang.
+      <strong>3. Proyeksi Masa Depan (September 2026 / 4 Minggu)</strong>: peramalan penjualan dan rekomendasi dropping barang.
     </p>
   </section>
 
@@ -68,16 +116,86 @@
 <div id="foot"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="data.js?v=633_v2"></script>
-<script src="common.js?v=633_v2"></script>
+<script src="data.js?v=635"></script>
+<script src="common.js?v=635"></script>
 <script>
 layout(
   "prediksi.html",
-  "Prediksi Penjualan & Pengujian Akurasi Outlet",
-  "Visualisasi 3 fase terpadu: Data Latih (Jun-Jul), Uji Akurasi Aktual vs Prediksi (Agustus), dan Proyeksi Penjualan serta Rekomendasi Dropping (September-Oktober 2026)."
+  "5. Evaluasi Komparatif & Simulator Prediksi Interaktif",
+  "Papan skor evaluasi model pada data uji (Agustus 2026), deteksi overfitting, serta simulator prediksi penjualan 1 bulan ke depan (September 2026) dengan buffer dropping dinamis."
 );
 
 if (D) {
+  // ==========================================
+  // LOGIKA BAGIAN 1: EVALUASI METRIK
+  // ==========================================
+  const ALL_EVAL_MODELS = [
+    "Baseline",
+    "Baseline (roll-3)",
+    "Baseline (lag-1)",
+    "Linear Regression",
+    "Random Forest",
+    "Gradient Boosting"
+  ];
+
+  const headMetrics = [
+    "Model Prediksi",
+    "MAE (Rata-rata Meleset)",
+    "RMSE (Penalti Meleset Besar)",
+    "R² (Daya Jelas)",
+    "Akurasi Toleransi &plusmn;5 Barang",
+    "Akurasi Toleransi &plusmn;10 Barang",
+    "Arah Bias Prediksi",
+    "Peningkatan vs Baseline"
+  ];
+
+  const rowsMetrics = ALL_EVAL_MODELS.map(m => {
+    const met = R[m];
+    const isBest = m === best;
+    const nameStr = isBest
+      ? `<strong class="text-best">${m} (Model Terbaik)</strong>`
+      : (m.startsWith("Baseline") ? `<span class="text-muted">${m}</span>` : `<strong>${m}</strong>`);
+    const maeStr = isBest ? `<strong class="text-best">${fmt(met.MAE)} pcs</strong>` : `${fmt(met.MAE)} pcs`;
+    const r2Str = met.R2 != null ? (isBest ? `<strong class="text-accent">${fmt(met.R2, 4)}</strong>` : `${fmt(met.R2, 4)}`) : "-";
+    const biasStr = met.bias != null
+      ? (met.bias > 0.5 ? `<span class="text-accent">+${fmt(met.bias, 2)} (underestimate)</span>` : (met.bias < -0.5 ? `<span class="text-muted">${fmt(met.bias, 2)} (overestimate)</span>` : `<span class="text-best">${fmt(met.bias, 2)} (netral)</span>`))
+      : "-";
+    const impStr = met.improve_vs_baseline != null
+      ? (met.improve_vs_baseline > 0 ? `<strong class="text-best">+${fmt(met.improve_vs_baseline, 1)}%</strong>` : `${fmt(met.improve_vs_baseline, 1)}%`)
+      : "-";
+
+    return [
+      nameStr,
+      maeStr,
+      met.RMSE != null ? `${fmt(met.RMSE)} pcs` : "-",
+      r2Str,
+      met.within5 != null ? `${fmt(met.within5, 1)}%` : "-",
+      met.within10 != null ? `${fmt(met.within10, 1)}%` : "-",
+      biasStr,
+      impStr
+    ];
+  });
+
+  table("tb-metrics", headMetrics, rowsMetrics, (r, i) => ALL_EVAL_MODELS[i] === best ? "best" : "");
+
+  // Temuan Inti
+  $("insight").innerHTML = `
+    <div class="panel-head">
+      <h2>Temuan Kunci Hasil Evaluasi</h2>
+    </div>
+    <ul class="clean-list">
+      <li><strong>Linear Regression Paling Akurat &amp; Andal:</strong> Menghasilkan MAE terendah yaitu <strong>${fmt(R["Linear Regression"].MAE)} barang</strong> per dropping dengan R² sebesar <strong>${fmt(R["Linear Regression"].R2, 4)}</strong>. Keunggulan ini tercapai karena seleksi 6 fitur inti yang secara cermat membuang bias tren bulan.</li>
+      <li><strong>Peningkatan Terhadap Baseline Signifikan:</strong> Linear Regression mengurangi kesalahan tebakan sebesar <strong>+${fmt(R["Linear Regression"].improve_vs_baseline, 1)}%</strong> dibandingkan Baseline Mean Statis (MAE ${fmt(R.Baseline.MAE)} barang).</li>
+      <li><strong>Overfitting pada Random Forest:</strong> Random Forest tampak sangat presisi pada data latih (MAE ${fmt(R["Random Forest"].MAE_train)}), namun galatnya melonjak saat diuji pada data riil Agustus (MAE ${fmt(R["Random Forest"].MAE)}). Pohon keputusan cenderung menghafal riwayat lokal daripada menangkap tren umum.</li>
+      <li><strong>Tingkat Presisi Tinggi:</strong> Sebanyak <strong>${fmt(R["Linear Regression"].within5, 1)}%</strong> prediksi Linear Regression meleset tidak lebih dari 5 barang, dan <strong>${fmt(R["Linear Regression"].within10, 1)}%</strong> berada dalam toleransi &plusmn;10 barang.</li>
+    </ul>
+  `;
+
+  let evalCharts = [];
+
+  // ==========================================
+  // LOGIKA BAGIAN 2: SIMULATOR PREDIKSI OUTLET
+  // ==========================================
   const OM = D.outlet_meta.map(([id, nama, wil, meanRate, lastJb]) => ({
     id,
     nama,
@@ -86,8 +204,6 @@ if (D) {
     lastJb: lastJb || 40
   }));
 
-  // Map data test (Agustus 2026) dari D.rows:
-  // [tanggal, outlet_idx, dropping_aktual, terjual_aktual, p_Baseline, p_LR, p_RF, p_GB]
   const TEST_ROWS = (D.rows || []).map(r => ({
     t: r[0],
     o: r[1],
@@ -101,8 +217,6 @@ if (D) {
     }
   }));
 
-  // Map data history (Juni - Agustus) dari D.history:
-  // [tanggal, outlet_idx, luar, terjual, jb, sisa]
   const HIST_ROWS = (D.history || []).map(r => ({
     t: r[0],
     o: r[1],
@@ -112,8 +226,6 @@ if (D) {
     sisa: r[5]
   }));
 
-  // Map data future (September - Oktober 2026) dari D.future:
-  // [tanggal, outlet_idx, last_jb, p_Baseline, p_LR, p_RF, p_GB]
   const FUTURE_ROWS = (D.future || []).map(r => ({
     t: r[0],
     o: r[1],
@@ -126,43 +238,47 @@ if (D) {
     }
   }));
 
-  // Fungsi hitung dropping aman (kelipatan 10) dari prediksi terjual
-  function calcDropping(predVal, outletRate) {
-    const y = Math.max(0, Number(predVal) || 0);
-    const rate = Math.max(0.35, Number(outletRate) || 0.626);
-    const minD = Math.ceil(Math.max(y, 1) * 1.10 / 10) * 10;
-    const rateD = Math.round((Math.max(y, 1) / rate) / 10) * 10;
-    const drop = Math.max(10, minD, rateD);
-    const sisa = Math.max(0, +(drop - y).toFixed(1));
-    return { drop, sisa };
+  const selOutlet = $("sel-outlet");
+  const selModel = $("sel-model");
+  const rngBuffer = $("rng-buffer");
+  const txtBuffer = $("txt-buffer");
+  const lblBuffer = $("lbl-buffer");
+
+  OM.forEach(o => {
+    const opt = document.createElement("option");
+    opt.value = o.id;
+    opt.textContent = `${o.nama} (${o.wil})`;
+    selOutlet.appendChild(opt);
+  });
+
+  let timelineChartInstance = null;
+
+  function calcDropping(predVal, rateTarget, bufferPct) {
+    const bufFactor = 1.0 + (bufferPct / 100.0);
+    const minDrop = Math.ceil(Math.max(predVal, 1.0) * bufFactor / 10.0) * 10.0;
+    const rateDrop = Math.round((Math.max(predVal, 1.0) / Math.max(rateTarget, 0.35)) / 10.0) * 10.0;
+    const drop = Math.max(10.0, minDrop, rateDrop);
+    const sisa = Math.max(0.0, drop - predVal);
+    return { drop: Math.round(drop), sisa: Math.round(sisa * 10) / 10 };
   }
 
-  // Isi dropdown outlet
-  const selOutlet = $("sel-outlet");
-  selOutlet.innerHTML = OM.map((o, idx) => 
-    `<option value="${idx}">${idx + 1}. ${o.nama} (${o.wil}) - Serapan ${fmt(o.rate * 100, 1)}%</option>`
-  ).join("");
-
-  const selModel = $("sel-model");
-  let chartInstance = null;
-
   function renderOutletView() {
-    const oIdx = Number(selOutlet.value);
-    const outlet = OM[oIdx];
-    const activeM = selModel.value;
+    const outletId = selOutlet.value;
+    const outletIdx = OM.findIndex(o => o.id === outletId);
+    const outlet = OM[outletIdx] || OM[0];
+    const activeM = selModel.value || "Linear Regression";
+    const bufferPct = parseInt(rngBuffer.value, 10) || 10;
 
-    // Filter baris untuk outlet ini
-    const hRows = HIST_ROWS.filter(r => r.o === oIdx).sort((a, b) => a.t.localeCompare(b.t));
-    const tRows = TEST_ROWS.filter(r => r.o === oIdx).sort((a, b) => a.t.localeCompare(b.t));
-    const fRows = FUTURE_ROWS.filter(r => r.o === oIdx).sort((a, b) => a.t.localeCompare(b.t));
+    txtBuffer.textContent = `+${bufferPct}%`;
+    lblBuffer.textContent = `Buffer Cadangan Stok: +${bufferPct}%`;
 
-    // Pisahkan riwayat Latih (sebelum Agustus)
+    const hRows = HIST_ROWS.filter(r => r.o === outletIdx);
+    const tRows = TEST_ROWS.filter(r => r.o === outletIdx);
+    const fRows = FUTURE_ROWS.filter(r => r.o === outletIdx);
+
     const trainRows = hRows.filter(r => r.t < "2026-08-01");
-
-    // Ambil nilai patokan baseline statis outlet ini
     const baseVal = tRows.length > 0 ? tRows[0].p["Baseline"] : (fRows.length > 0 ? fRows[0].p["Baseline"] : 0);
 
-    // Hitung akurasi pada data test Agustus untuk model terpilih dan baseline
     let sumErr = 0, sumErrBase = 0, countTest = tRows.length;
     tRows.forEach(r => {
       const pred = r.p[activeM];
@@ -172,28 +288,24 @@ if (D) {
     const avgMaeTest = countTest > 0 ? (sumErr / countTest) : 0;
     const avgMaeBase = countTest > 0 ? (sumErrBase / countTest) : 0;
 
-    // Hitung total proyeksi Sep-Okt
     let totPredFuture = 0, totDropFuture = 0, totSisaFuture = 0;
     fRows.forEach(r => {
       const pred = r.p[activeM];
-      const rec = calcDropping(pred, outlet.rate);
+      const rec = calcDropping(pred, outlet.rate, bufferPct);
       totPredFuture += pred;
       totDropFuture += rec.drop;
       totSisaFuture += rec.sisa;
     });
 
-    // Tampilkan 4 KPI Outlet
     $("outlet-kpi").innerHTML = kpiHTML([
       [`Outlet Terpilih`, `${outlet.nama}`, `Wilayah: ${outlet.wil} | Dropping Terakhir: ${outlet.lastJb} pcs`],
       [`Rata-rata Serapan (Rate)`, `${fmt(outlet.rate * 100, 1)}%`, `Rasio terjual terhadap dropping historis`],
       [`Galat Uji Agustus (${activeM})`, `${fmt(avgMaeTest, 1)} barang`, `Patokan Baseline: ${fmt(baseVal, 1)} pcs (Galat Baseline: ${fmt(avgMaeBase, 1)} barang)`],
-      [`Rekomendasi Dropping (Sep-Okt)`, `${fmt(totDropFuture, 0)} barang`, `Prediksi Terjual: ${fmt(totPredFuture, 0)} | Estimasi Sisa: ${fmt(totSisaFuture, 0)}`]
+      [`Rekomendasi Dropping (September 2026)`, `${fmt(totDropFuture, 0)} barang`, `Prediksi Terjual: ${fmt(totPredFuture, 0)} | Estimasi Sisa: ${fmt(totSisaFuture, 0)} (Buffer +${bufferPct}%)`]
     ], 2);
 
-    // Kumpulkan tanggal unik berurutan
-    // Urutan: train dates -> test dates -> future dates
     const timelineDates = [];
-    const dateMeta = {}; // { 'YYYY-MM-DD': { phase, a, jb, sisa, p: {} } }
+    const dateMeta = {};
 
     trainRows.forEach(r => {
       if (!dateMeta[r.t]) {
@@ -212,35 +324,32 @@ if (D) {
     fRows.forEach(r => {
       if (!dateMeta[r.t]) {
         timelineDates.push(r.t);
-        const rec = calcDropping(r.p[activeM], outlet.rate);
+        const rec = calcDropping(r.p[activeM], outlet.rate, bufferPct);
         dateMeta[r.t] = { phase: "future", a: null, jb: rec.drop, sisa: rec.sisa, p: r.p };
       }
     });
 
     timelineDates.sort();
 
-    // Format label tanggal (misal "04 Jun", "07 Agu", "03 Sep")
     const dateLabels = timelineDates.map(d => {
       const dt = new Date(d + "T00:00:00");
       return dt.toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
     });
 
-    // Indeks batas fase untuk penanda garis vertikal
-    const firstTestIdx = timelineDates.findIndex(d => dateMeta[d].phase === "test");
-    const firstFutureIdx = timelineDates.findIndex(d => dateMeta[d].phase === "future");
-
-    // Siapkan dataset grafik
     const isLight = getTheme() === "light";
     const colAktual = isLight ? "#0284c7" : "#38bdf8";
     const colDrop = isLight ? "#059669" : "#34d399";
-    const colPredTest = isLight ? "#7c3aed" : "#c084fc"; // Ungu terang untuk line uji akurasi model
+    const colPredTest = isLight ? "#7c3aed" : "#c084fc";
     const colModel = COL[activeM] || (isLight ? "#b45309" : "#fbbf24");
-    const colBaseline = isLight ? "#475569" : "#94a3b8"; // Slate / abu-abu netral untuk garis patokan
+    const colBaseline = isLight ? "#475569" : "#94a3b8";
+
+    const firstTestIdx = timelineDates.findIndex(d => dateMeta[d].phase === "test");
+    const firstFutureIdx = timelineDates.findIndex(d => dateMeta[d].phase === "future");
 
     // 1. Garis Aktual Terjual (tersedia di Train & Test)
     const dataAktual = timelineDates.map(d => dateMeta[d].a != null ? dateMeta[d].a : null);
 
-    // 2. Garis Patokan Baseline (Rata-rata Statis) - Membentang di Fase Uji & Masa Depan sebagai acuan perbandingan
+    // 2. Garis Patokan Baseline (Rata-rata Statis)
     const dataBaseline = timelineDates.map(d => {
       if (dateMeta[d].phase === "test" || dateMeta[d].phase === "future") {
         return dateMeta[d].p["Baseline"] != null ? dateMeta[d].p["Baseline"] : null;
@@ -249,30 +358,30 @@ if (D) {
     });
 
     // 3. Garis Uji Akurasi Model Terpilih pada Data Test (Agustus)
-    const dataPredTest = timelineDates.map(d => {
+    const dataModelTest = timelineDates.map(d => {
       if (dateMeta[d].phase === "test") {
         return dateMeta[d].p[activeM] || null;
       }
       return null;
     });
 
-    // 4. Garis Proyeksi Penjualan Masa Depan Model Terpilih (September - Oktober)
-    const dataPredFuture = timelineDates.map(d => {
+    // 4. Garis Proyeksi Penjualan Masa Depan (September 2026)
+    const dataModelFuture = timelineDates.map(d => {
       if (dateMeta[d].phase === "future") {
         return dateMeta[d].p[activeM] || null;
       }
       return null;
     });
 
-    // Sambungkan titik transisi dari test terakhir ke future pertama agar garis tidak putus di visual
+    // Sambungkan titik transisi dari test terakhir ke future pertama agar garis mulus dan tidak terputus
     const lastTestDate = timelineDates.filter(d => dateMeta[d].phase === "test").pop();
     const lastTestDateIdx = timelineDates.indexOf(lastTestDate);
     if (lastTestDateIdx >= 0 && firstFutureIdx >= 0) {
       dataBaseline[lastTestDateIdx] = dateMeta[lastTestDate].p["Baseline"];
-      dataPredFuture[lastTestDateIdx] = dateMeta[lastTestDate].p[activeM];
+      dataModelFuture[lastTestDateIdx] = dateMeta[lastTestDate].p[activeM];
     }
 
-    // 5. Garis Dropping Historis & Rekomendasi Dropping Masa Depan
+    // 5. Garis Kebutuhan Dropping Historis & Rekomendasi Masa Depan (+Buffer Stok)
     const dataDropping = timelineDates.map(d => dateMeta[d].jb);
 
     const datasets = [
@@ -287,7 +396,7 @@ if (D) {
         tension: 0.2
       },
       {
-        label: `Patokan Baseline (Rata-rata Statis: ${fmt(baseVal, 1)} pcs)`,
+        label: `Patokan Baseline (Rata-rata: ${fmt(baseVal, 1)} pcs)`,
         data: dataBaseline,
         borderColor: colBaseline,
         backgroundColor: "transparent",
@@ -299,7 +408,7 @@ if (D) {
       },
       {
         label: `Prediksi Uji Akurasi (${activeM}) [Agustus]`,
-        data: dataPredTest,
+        data: dataModelTest,
         borderColor: colPredTest,
         backgroundColor: "transparent",
         borderDash: [5, 4],
@@ -309,8 +418,8 @@ if (D) {
         tension: 0.2
       },
       {
-        label: `Proyeksi Terjual Masa Depan (${activeM}) [Sep-Okt]`,
-        data: dataPredFuture,
+        label: `Proyeksi Terjual Masa Depan (${activeM}) [Sep 2026]`,
+        data: dataModelFuture,
         borderColor: colModel,
         borderDash: [3, 3],
         borderWidth: 2.6,
@@ -319,7 +428,7 @@ if (D) {
         tension: 0.2
       },
       {
-        label: "Kebutuhan Dropping (Historis & Rekomendasi)",
+        label: `Kebutuhan Dropping (Historis & Rekomendasi Buffer +${bufferPct}%)`,
         data: dataDropping,
         borderColor: colDrop,
         borderWidth: 1.8,
@@ -329,7 +438,7 @@ if (D) {
       }
     ];
 
-    // Plugin untuk menggambar garis batas vertikal fase
+    // Plugin garis pembatas fase vertikal yang bersih
     const phaseBoundaryPlugin = {
       id: "phaseBoundaries",
       afterDatasetsDraw(chart) {
@@ -362,10 +471,12 @@ if (D) {
       }
     };
 
-    if (chartInstance) chartInstance.destroy();
+    if (timelineChartInstance) {
+      timelineChartInstance.destroy();
+    }
 
     const chartCtx = $("c-timeline");
-    chartInstance = new Chart(chartCtx, {
+    timelineChartInstance = new Chart(chartCtx, {
       type: "line",
       data: { labels: dateLabels, datasets },
       plugins: [phaseBoundaryPlugin],
@@ -383,78 +494,92 @@ if (D) {
       }
     });
 
-    // Isi Tabel Rincian Mingguan
-    $("table-subtitle").textContent = `${outlet.nama} (${timelineDates.length} Kunjungan: Jun - Okt 2026)`;
-    
-    const head = [
-      "Tanggal",
-      "Fase Data",
-      "Dropping",
-      "Terjual Aktual",
-      `Prediksi (${activeM})`,
-      "Patokan Baseline",
-      "Galat Uji vs Aktual",
-      "Estimasi Sisa"
-    ];
-
+    // Tabel Rincian Data Mingguan
     const tableRows = timelineDates.map(d => {
-      const meta = dateMeta[d];
-      const dObj = new Date(d + "T00:00:00");
-      const dFormatted = dObj.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+      const m = dateMeta[d];
+      const dt = new Date(d + "T00:00:00");
+      const tglFormatted = dt.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
       
-      let badgePhase = "";
-      let predValStr = "-";
-      let baselineStr = "-";
-      let errorStr = "-";
-      let droppingStr = `${meta.jb} pcs`;
-      let sisaStr = `${fmt(meta.sisa, 1)} pcs`;
-      let aktualStr = meta.a != null ? `<strong>${meta.a}</strong>` : `<span class="text-muted">(belum ada)</span>`;
+      let faseBadge = "";
+      let predStr = "-";
+      let baseStr = "-";
+      let errStr = "-";
+      let dropStr = `${m.jb} pcs`;
+      let sisaStr = `${fmt(m.sisa, 1)} pcs`;
 
-      if (meta.phase === "train") {
-        badgePhase = `<span class="tag-static">1. Data Latih (Train)</span>`;
-      } else if (meta.phase === "test") {
-        badgePhase = `<span class="badge-best" style="background: rgba(124, 58, 237, 0.15); color: #c084fc; border: 1px solid #7c3aed;">2. Uji Akurasi (Test)</span>`;
-        const pVal = meta.p[activeM];
-        predValStr = `<strong class="text-accent">${fmt(pVal, 1)}</strong>`;
-        const bVal = meta.p["Baseline"];
-        baselineStr = `<span class="font-mono text-muted">${fmt(bVal, 1)} pcs</span>`;
-        const err = meta.a - pVal;
-        const errCls = Math.abs(err) <= 5 ? "text-best" : "text-muted";
-        errorStr = `<span class="${errCls}">${err > 0 ? "+" : ""}${fmt(err, 1)} pcs</span>`;
-      } else {
-        badgePhase = `<span class="badge-best">3. Proyeksi Depan (Forecast)</span>`;
-        const pVal = meta.p[activeM];
-        predValStr = `<strong class="text-best">${fmt(pVal, 1)}</strong>`;
-        const bVal = meta.p["Baseline"];
-        baselineStr = `<span class="font-mono text-muted">${fmt(bVal, 1)} pcs</span>`;
-        errorStr = `<span class="text-muted">(proyeksi)</span>`;
-        droppingStr = `<strong class="text-accent">${meta.jb} pcs</strong>`;
+      if (m.phase === "train") {
+        faseBadge = `<span class="badge" style="background: rgba(148, 163, 184, 0.2); color: var(--text-muted);">Data Latih</span>`;
+      } else if (m.phase === "test") {
+        faseBadge = `<span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; font-weight: 700;">Uji Akurasi</span>`;
+        const pVal = m.p[activeM];
+        predStr = `<strong>${fmt(pVal, 1)} pcs</strong>`;
+        const bVal = m.p["Baseline"];
+        baseStr = `<span class="font-mono text-muted">${fmt(bVal, 1)} pcs</span>`;
+        const selisih = Math.abs(m.a - pVal);
+        const colSelisih = selisih <= 5 ? "var(--text-best)" : (selisih <= 10 ? "var(--text-accent)" : "#ef4444");
+        errStr = `<span style="color: ${colSelisih}; font-weight: 700;">${fmt(selisih, 1)} pcs</span>`;
+      } else if (m.phase === "future") {
+        faseBadge = `<span class="badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; font-weight: 700;">Prediksi Sep 2026</span>`;
+        const pVal = m.p[activeM];
+        predStr = `<strong class="text-accent">${fmt(pVal, 1)} pcs</strong>`;
+        const bVal = m.p["Baseline"];
+        baseStr = `<span class="font-mono text-muted">${fmt(bVal, 1)} pcs</span>`;
+        dropStr = `<strong style="color: var(--text-best);">${m.jb} pcs</strong>`;
+        errStr = `<span class="text-muted">(proyeksi)</span>`;
       }
 
+      const aktStr = m.a != null ? `<strong>${m.a} pcs</strong>` : `<span class="text-muted">(belum ada)</span>`;
+
       return [
-        dFormatted,
-        badgePhase,
-        droppingStr,
-        aktualStr,
-        predValStr,
-        baselineStr,
-        errorStr,
+        tglFormatted,
+        faseBadge,
+        dropStr,
+        aktStr,
+        predStr,
+        baseStr,
+        errStr,
         sisaStr
       ];
     });
 
-    table("tb-timeline", head, tableRows, (r, i) => {
-      if (r[1].includes("Uji Akurasi")) return "best";
-      return "";
-    });
+    table(
+      "tb-timeline",
+      ["Tanggal Dropping", "Fase Data", "Dropping (Pcs)", "Terjual Aktual", `Prediksi (${activeM})`, "Patokan Baseline", "Galat / Selisih", "Estimasi Sisa"],
+      tableRows,
+      r => r[1].includes("Prediksi") ? "best" : (r[1].includes("Uji") ? "" : "")
+    );
+
+    $("table-title").innerHTML = `Rincian Dropping &amp; Proyeksi: <strong>${outlet.nama}</strong> (${outlet.wil})`;
+    $("table-subtitle").textContent = `Model: ${activeM} | Buffer Stok: +${bufferPct}%`;
+  }
+
+  function renderAll() {
+    evalCharts.forEach(c => c && c.destroy());
+    evalCharts = [];
+
+    evalCharts.push(bar("c-mae", MODELS, [
+      { label: "MAE (Rata-rata Galat)", data: MODELS.map(m => R[m].MAE), backgroundColor: COL.Aktual },
+      { label: "RMSE (Standar Deviasi Galat)", data: MODELS.map(m => R[m].RMSE), backgroundColor: COL["Gradient Boosting"] }
+    ], {
+      scales: { y: { title: { display: true, text: "Barang per Kunjungan (pcs)" } } }
+    }));
+
+    evalCharts.push(bar("c-over", MODELS, [
+      { label: "MAE Data Latih (Jun-Jul)", data: MODELS.map(m => R[m].MAE_train), backgroundColor: COL.Baseline },
+      { label: "MAE Data Uji (Agustus)", data: MODELS.map(m => R[m].MAE), backgroundColor: COL["Linear Regression"] }
+    ], {
+      scales: { y: { display: true, text: "MAE (pcs)" } }
+    }));
+
+    renderOutletView();
   }
 
   selOutlet.onchange = renderOutletView;
   selModel.onchange = renderOutletView;
-  window.onThemeChange = renderOutletView;
+  rngBuffer.oninput = renderOutletView;
 
-  // Render awal
-  renderOutletView();
+  renderAll();
+  window.onThemeChange = renderAll;
 }
 </script>
 </body>
