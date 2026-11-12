@@ -140,7 +140,6 @@ def segmen_orang3_linear_regression(xl, tr, te, ytr, yte, base_mae):
 
 def cetak_segmen_orang3(met_lr, coef_dict, intercept, base_mae):
     print("\n" + "=" * 78)
-    print("🎬 [VIDEO PRESENTASI - SEGMEN ORANG 3]")
     print("   ALGORITMA 1: LINEAR REGRESSION & EVALUASI TERHADAP BASELINE")
     print("=" * 78)
     print("📌 Konsep        : Model Parametrik Linier (Ordinary Least Squares / OLS)")
@@ -208,7 +207,6 @@ def segmen_orang4_random_forest(xl, tr, te, ytr, yte, base_mae):
 
 def cetak_segmen_orang4(met_rf, importance_dict, base_mae):
     print("\n" + "=" * 78)
-    print("🎬 [VIDEO PRESENTASI - SEGMEN ORANG 4]")
     print("   ALGORITMA 2: RANDOM FOREST REGRESSOR & ANALISIS FEATURE IMPORTANCE")
     print("=" * 78)
     print("📌 Konsep        : Ensemble Bagging (Bootstrap Aggregating) dari Pohon Keputusan")
@@ -279,7 +277,6 @@ def segmen_orang5_gradient_boosting(xl, tr, te, ytr, yte, base_mae):
 
 def cetak_segmen_orang5(met_gb, importance_dict, base_mae, res_all):
     print("\n" + "=" * 78)
-    print("🎬 [VIDEO PRESENTASI - SEGMEN ORANG 5]")
     print("   ALGORITMA 3: GRADIENT BOOSTING, SINTESIS KOMPARASI & ROLL-FORWARD")
     print("=" * 78)
     print("📌 Konsep        : Sequential Ensemble Boosting (Pohon Bertahap Koreksi Residual)")
