@@ -54,10 +54,10 @@
   <!-- ========================================== -->
   <section class="panel panel-focal" aria-label="Kontrol simulator prediksi outlet">
     <div class="panel-head">
-      <h2>Simulator Prediksi &amp; Rekomendasi Dropping (September 2026 - 1 Bulan Ke Depan)</h2>
+      <h2>Simulator Prediksi Penjualan Outlet (September 2026 - 1 Bulan Ke Depan)</h2>
       <span id="outlet-badge" class="font-mono text-accent">18 Outlet Sampel Data Asli</span>
     </div>
-    <div class="grid-3" style="align-items: flex-end;">
+    <div class="grid-2">
       <div class="field">
         <label for="sel-outlet">Pilih Outlet (Sampel Data Asli)</label>
         <select id="sel-outlet" style="font-size: 1rem; font-weight: 600;"></select>
@@ -70,16 +70,9 @@
           <option value="Random Forest">Random Forest (MAE 6.62)</option>
         </select>
       </div>
-      <div class="field">
-        <label for="rng-buffer" id="lbl-buffer">Buffer Cadangan Stok: +10%</label>
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <input type="range" id="rng-buffer" min="5" max="30" step="5" value="10" style="flex: 1; cursor: pointer;">
-          <span id="txt-buffer" class="font-mono text-accent" style="font-weight: 700; min-width: 3rem;">+10%</span>
-        </div>
-      </div>
     </div>
     <p class="panel-note" style="margin-top: 0.65rem;">
-      <strong>Kontrol Interaktif:</strong> Geser slider buffer stok untuk menyesuaikan batas aman cadangan barang dropping (5% - 30%). Rekomendasi kuota dropping mingguan di bawah akan langsung dihitung ulang secara otomatis.
+      <strong>Simulasi Model Data Mining:</strong> Pilih outlet dan algoritma untuk melihat perbandingan penjualan aktual dengan hasil peramalan model (<em>sales forecasting</em>) pada data uji Agustus dan proyeksi 1 bulan ke depan (September 2026).
     </p>
   </section>
 
@@ -116,13 +109,13 @@
 <div id="foot"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="data.js?v=636"></script>
-<script src="common.js?v=636"></script>
+<script src="data.js?v=637"></script>
+<script src="common.js?v=637"></script>
 <script>
 layout(
   "prediksi.html",
   "5. Evaluasi Komparatif & Simulator Prediksi Interaktif",
-  "Papan skor evaluasi model pada data uji (Agustus 2026), deteksi overfitting, serta simulator prediksi penjualan 1 bulan ke depan (September 2026) dengan buffer dropping dinamis."
+  "Papan skor evaluasi model pada data uji (Agustus 2026), deteksi overfitting, serta simulator peramalan penjualan (sales forecasting) 1 bulan ke depan (September 2026)."
 );
 
 if (D) {
@@ -240,9 +233,6 @@ if (D) {
 
   const selOutlet = $("sel-outlet");
   const selModel = $("sel-model");
-  const rngBuffer = $("rng-buffer");
-  const txtBuffer = $("txt-buffer");
-  const lblBuffer = $("lbl-buffer");
 
   OM.forEach(o => {
     const opt = document.createElement("option");
@@ -253,24 +243,11 @@ if (D) {
 
   let timelineChartInstance = null;
 
-  function calcDropping(predVal, rateTarget, bufferPct) {
-    const bufFactor = 1.0 + (bufferPct / 100.0);
-    const minDrop = Math.ceil(Math.max(predVal, 1.0) * bufFactor / 10.0) * 10.0;
-    const rateDrop = Math.round((Math.max(predVal, 1.0) / Math.max(rateTarget, 0.35)) / 10.0) * 10.0;
-    const drop = Math.max(10.0, minDrop, rateDrop);
-    const sisa = Math.max(0.0, drop - predVal);
-    return { drop: Math.round(drop), sisa: Math.round(sisa * 10) / 10 };
-  }
-
   function renderOutletView() {
     const outletId = selOutlet.value;
     const outletIdx = OM.findIndex(o => o.id === outletId);
     const outlet = OM[outletIdx] || OM[0];
     const activeM = selModel.value || "Linear Regression";
-    const bufferPct = parseInt(rngBuffer.value, 10) || 10;
-
-    txtBuffer.textContent = `+${bufferPct}%`;
-    lblBuffer.textContent = `Buffer Cadangan Stok: +${bufferPct}%`;
 
     const hRows = HIST_ROWS.filter(r => r.o === outletIdx);
     const tRows = TEST_ROWS.filter(r => r.o === outletIdx);
@@ -288,20 +265,17 @@ if (D) {
     const avgMaeTest = countTest > 0 ? (sumErr / countTest) : 0;
     const avgMaeBase = countTest > 0 ? (sumErrBase / countTest) : 0;
 
-    let totPredFuture = 0, totDropFuture = 0, totSisaFuture = 0;
+    let totPredFuture = 0;
     fRows.forEach(r => {
-      const pred = r.p[activeM];
-      const rec = calcDropping(pred, outlet.rate, bufferPct);
-      totPredFuture += pred;
-      totDropFuture += rec.drop;
-      totSisaFuture += rec.sisa;
+      totPredFuture += (r.p[activeM] || 0);
     });
+    const avgPredFuture = fRows.length > 0 ? (totPredFuture / fRows.length) : 0;
 
     $("outlet-kpi").innerHTML = kpiHTML([
       [`Outlet Terpilih`, `${outlet.nama}`, `Wilayah: ${outlet.wil} | Dropping Terakhir: ${outlet.lastJb} pcs`],
       [`Rata-rata Serapan (Rate)`, `${fmt(outlet.rate * 100, 1)}%`, `Rasio terjual terhadap dropping historis`],
-      [`Galat Uji Agustus (${activeM})`, `${fmt(avgMaeTest, 1)} barang`, `Patokan Baseline: ${fmt(baseVal, 1)} pcs (Galat Baseline: ${fmt(avgMaeBase, 1)} barang)`],
-      [`Rekomendasi Dropping (September 2026)`, `${fmt(totDropFuture, 0)} barang`, `Prediksi Terjual: ${fmt(totPredFuture, 0)} | Estimasi Sisa: ${fmt(totSisaFuture, 0)} (Buffer +${bufferPct}%)`]
+      [`Galat Uji Agustus (${activeM})`, `${fmt(avgMaeTest, 1)} barang`, `Patokan Baseline: ${fmt(baseVal, 1)} pcs (Galat: ${fmt(avgMaeBase, 1)} barang)`],
+      [`Total Prediksi Terjual (Sep 2026)`, `${fmt(totPredFuture, 0)} barang`, `Rata-rata ${fmt(avgPredFuture, 1)} barang/minggu (${fRows.length} jadwal)`]
     ], 2);
 
     const timelineDates = [];
@@ -310,22 +284,21 @@ if (D) {
     trainRows.forEach(r => {
       if (!dateMeta[r.t]) {
         timelineDates.push(r.t);
-        dateMeta[r.t] = { phase: "train", a: r.a, jb: r.jb, sisa: r.sisa, p: {} };
+        dateMeta[r.t] = { phase: "train", a: r.a, jb: r.jb, p: {} };
       }
     });
 
     tRows.forEach(r => {
       if (!dateMeta[r.t]) {
         timelineDates.push(r.t);
-        dateMeta[r.t] = { phase: "test", a: r.a, jb: r.jb, sisa: Math.max(0, r.jb - r.a), p: r.p };
+        dateMeta[r.t] = { phase: "test", a: r.a, jb: r.jb, p: r.p };
       }
     });
 
     fRows.forEach(r => {
       if (!dateMeta[r.t]) {
         timelineDates.push(r.t);
-        const rec = calcDropping(r.p[activeM], outlet.rate, bufferPct);
-        dateMeta[r.t] = { phase: "future", a: null, jb: rec.drop, sisa: rec.sisa, p: r.p };
+        dateMeta[r.t] = { phase: "future", a: null, jb: null, p: r.p };
       }
     });
 
@@ -381,8 +354,8 @@ if (D) {
       dataModelFuture[lastTestDateIdx] = dateMeta[lastTestDate].p[activeM];
     }
 
-    // 5. Garis Kebutuhan Dropping Historis & Rekomendasi Masa Depan (+Buffer Stok)
-    const dataDropping = timelineDates.map(d => dateMeta[d].jb);
+    // 5. Garis Dropping Historis (Jumlah Pengiriman Riwayat di Masa Lalu)
+    const dataDropping = timelineDates.map(d => dateMeta[d].jb != null ? dateMeta[d].jb : null);
 
     const datasets = [
       {
@@ -429,7 +402,7 @@ if (D) {
         tension: 0.2
       },
       {
-        label: `Kebutuhan Dropping (Historis & Rekomendasi Buffer +${bufferPct}%)`,
+        label: "Dropping Historis (Jumlah Pengiriman Riwayat)",
         data: dataDropping,
         borderColor: colDrop,
         borderWidth: 1.8,
@@ -505,8 +478,7 @@ if (D) {
       let predStr = "-";
       let baseStr = "-";
       let errStr = "-";
-      let dropStr = `${m.jb} pcs`;
-      let sisaStr = `${fmt(m.sisa, 1)} pcs`;
+      let dropStr = m.jb != null ? `${m.jb} pcs` : `<span class="text-muted">-</span>`;
 
       if (m.phase === "train") {
         faseBadge = `<span class="badge" style="background: rgba(148, 163, 184, 0.2); color: var(--text-muted);">Data Latih</span>`;
@@ -525,7 +497,6 @@ if (D) {
         predStr = `<strong class="text-accent">${fmt(pVal, 1)} pcs</strong>`;
         const bVal = m.p["Baseline"];
         baseStr = `<span class="font-mono text-muted">${fmt(bVal, 1)} pcs</span>`;
-        dropStr = `<strong style="color: var(--text-best);">${m.jb} pcs</strong>`;
         errStr = `<span class="text-muted">(proyeksi)</span>`;
       }
 
@@ -538,20 +509,19 @@ if (D) {
         aktStr,
         predStr,
         baseStr,
-        errStr,
-        sisaStr
+        errStr
       ];
     });
 
     table(
       "tb-timeline",
-      ["Tanggal Dropping", "Fase Data", "Dropping (Pcs)", "Terjual Aktual", `Prediksi (${activeM})`, "Patokan Baseline", "Galat / Selisih", "Estimasi Sisa"],
+      ["Tanggal Dropping", "Fase Data", "Dropping Historis", "Terjual Aktual", `Prediksi (${activeM})`, "Patokan Baseline", "Galat / Selisih"],
       tableRows,
       r => r[1].includes("Prediksi") ? "best" : (r[1].includes("Uji") ? "" : "")
     );
 
-    $("table-title").innerHTML = `Rincian Dropping &amp; Proyeksi: <strong>${outlet.nama}</strong> (${outlet.wil})`;
-    $("table-subtitle").textContent = `Model: ${activeM} | Buffer Stok: +${bufferPct}%`;
+    $("table-title").innerHTML = `Rincian Riwayat &amp; Prediksi: <strong>${outlet.nama}</strong> (${outlet.wil})`;
+    $("table-subtitle").textContent = `Model: ${activeM} | Target: Prediksi Penjualan (Pcs)`;
   }
 
   function renderAll() {
@@ -577,7 +547,6 @@ if (D) {
 
   selOutlet.onchange = renderOutletView;
   selModel.onchange = renderOutletView;
-  rngBuffer.oninput = renderOutletView;
 
   renderAll();
   window.onThemeChange = renderAll;
