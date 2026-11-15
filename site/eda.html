@@ -1,206 +1,461 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>2. Eksplorasi Data (EDA) | Telemetri Prediksi Dropping</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div id="top"></div>
-<main id="main" class="shell workspace">
-  <section class="split-2-1" aria-label="Tren mingguan dan korelasi fitur">
-    <div class="panel panel-focal">
-      <div class="panel-head">
-        <h2>Seberapa besar selisih antara total barang yang di-drop dan yang benar-benar terjual tiap minggu?</h2>
-      </div>
-      <div class="chart-box"><canvas id="c-weekly" role="img" aria-label="Grafik garis total dropping dibandingkan total terjual per minggu"></canvas></div>
-      <p class="panel-note">Kesenjangan konsisten antara garis dropping dan terjual menunjukkan adanya ruang optimasi stok agar tidak terjadi penumpukan sisa barang.</p>
-    </div>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>2. Eksplorasi Data (EDA) | Telemetri Prediksi Dropping</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<div id="top"></div>
+		<main id="main" class="shell workspace">
+			<section
+				class="split-2-1"
+				aria-label="Tren mingguan dan korelasi fitur"
+			>
+				<div class="panel panel-focal">
+					<div class="panel-head">
+						<h2>
+							Seberapa besar selisih antara total barang yang
+							di-drop dan yang benar-benar terjual tiap minggu?
+						</h2>
+					</div>
+					<div class="chart-box">
+						<canvas
+							id="c-weekly"
+							role="img"
+							aria-label="Grafik garis total dropping dibandingkan total terjual per minggu"
+						></canvas>
+					</div>
+					<p class="panel-note">
+						Kesenjangan konsisten antara garis dropping dan terjual
+						menunjukkan adanya ruang optimasi stok agar tidak
+						terjadi penumpukan sisa barang.
+					</p>
+				</div>
 
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Fitur apa yang memiliki korelasi terkuat dengan penjualan?</h2>
-      </div>
-      <div class="chart-box"><canvas id="c-corr" role="img" aria-label="Grafik batang korelasi fitur terhadap target terjual"></canvas></div>
-      <p class="panel-note">Rata-rata bergerak 3 minggu (<code>terjual_roll3</code>) dan lag penjualan minggu lalu memimpin korelasi positif paling kuat.</p>
-    </div>
-  </section>
+				<div class="panel">
+					<div class="panel-head">
+						<h2>
+							Fitur apa yang memiliki korelasi terkuat dengan
+							penjualan?
+						</h2>
+					</div>
+					<div class="chart-box">
+						<canvas
+							id="c-corr"
+							role="img"
+							aria-label="Grafik batang korelasi fitur terhadap target terjual"
+						></canvas>
+					</div>
+					<p class="panel-note">
+						Rata-rata bergerak 3 minggu (<code>terjual_roll3</code>)
+						dan lag penjualan minggu lalu memimpin korelasi positif
+						paling kuat.
+					</p>
+				</div>
+			</section>
 
-  <!-- Bagian 5-Number Summary (Boxplot) Relevan dengan Kurikulum Data Mining -->
-  <section class="panel panel-focal" aria-label="Analisis sebaran boxplot 5-number summary">
-    <div class="panel-head">
-      <h2>Ringkasan 5 Angka (Boxplot 5-Number Summary) &amp; Deteksi Sebaran Outlier</h2>
-      <span class="font-mono text-muted">n = 6.038 baris transaksi (477 outlet model)</span>
-    </div>
-    <div class="table-wrap">
-      <table id="tb-box"></table>
-    </div>
-    <div style="margin-top: 1.25rem;">
-      <div class="chart-box" style="height: 220px;"><canvas id="c-box" role="img" aria-label="Grafik visualisasi rentang boxplot penjualan"></canvas></div>
-    </div>
-    <p class="panel-note">
-      <strong>Interpretasi Statistik Data Mining:</strong> Nilai <em>Mean (29.1 pcs)</em> lebih besar dari <em>Median (25.0 pcs)</em> membuktikan distribusi penjualan condong ke kanan (<em>positive skewness</em>). Jarak IQR (Q3 - Q1) adalah 18 pcs, dan penjualan di atas 63 pcs (Q3 + 1.5 &times; IQR) tergolong transaksi outlet berbobot tinggi.
-    </p>
-  </section>
+			<section
+				class="panel panel-focal"
+				aria-label="Rata-rata dikirim, terjual, dan sisa per bulan"
+			>
+				<div class="panel-head">
+					<h2>Rata-rata dikirim, terjual, dan sisa per bulan</h2>
+				</div>
+				<div class="chart-box">
+					<canvas
+						id="c-monthly"
+						role="img"
+						aria-label="Grafik batang berkelompok rata-rata unit dikirim, terjual, dan sisa per transaksi dropping setiap bulan"
+					></canvas>
+				</div>
+				<p class="panel-note">
+					Setiap batang menunjukkan rata-rata unit per transaksi
+					dropping pada bulan tersebut, dihitung dari seluruh data
+					outlet model (bukan hanya 18 outlet sampel). Sisa adalah
+					selisih jumlah barang dikirim dan terjual.
+				</p>
+			</section>
 
-  <section class="grid-2" aria-label="Distribusi serapan dan perbandingan wilayah">
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Bagaimana sebaran tingkat serapan (sell-through rate) toko?</h2>
-      </div>
-      <div class="chart-box"><canvas id="c-rate" role="img" aria-label="Histogram persentase sell-through rate"></canvas></div>
-      <p class="panel-note">Mayoritas outlet menyerap antara 50% hingga 80% dari total barang yang dikirim setiap minggunya.</p>
-    </div>
+			<!-- Bagian 5-Number Summary (Boxplot) Relevan dengan Kurikulum Data Mining -->
+			<section
+				class="panel panel-focal"
+				aria-label="Analisis sebaran boxplot 5-number summary"
+			>
+				<div class="panel-head">
+					<h2>
+						Ringkasan 5 Angka (Boxplot 5-Number Summary) &amp;
+						Deteksi Sebaran Outlier
+					</h2>
+					<span class="font-mono text-muted"
+						>n = 6.038 baris transaksi (477 outlet model)</span
+					>
+				</div>
+				<div class="table-wrap">
+					<table id="tb-box"></table>
+				</div>
+				<div style="margin-top: 1.25rem">
+					<div class="chart-box" style="height: 220px">
+						<canvas
+							id="c-box"
+							role="img"
+							aria-label="Grafik visualisasi rentang boxplot penjualan"
+						></canvas>
+					</div>
+				</div>
+				<p class="panel-note">
+					<strong>Interpretasi Statistik Data Mining:</strong> Nilai
+					<em>Mean (29.1 pcs)</em> lebih besar dari
+					<em>Median (25.0 pcs)</em> membuktikan distribusi penjualan
+					condong ke kanan (<em>positive skewness</em>). Jarak IQR (Q3
+					- Q1) adalah 18 pcs, dan penjualan di atas 63 pcs (Q3 + 1.5
+					&times; IQR) tergolong transaksi outlet berbobot tinggi.
+				</p>
+			</section>
 
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Bagaimana perbandingan karakteristik Dalam Kota vs Luar Kota?</h2>
-      </div>
-      <div class="table-wrap">
-        <table id="tb-wil"></table>
-      </div>
-      <p class="panel-note">Outlet Luar Kota memiliki rata-rata penjualan dan kuota pengiriman yang relatif lebih besar dibanding Dalam Kota.</p>
-    </div>
-  </section>
-</main>
-<div id="foot"></div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="data.js?v=635"></script>
-<script src="common.js?v=635"></script>
-<script>
-layout(
-  "eda.html",
-  "2. Eksplorasi Data (EDA) Penjualan Outlet",
-  "Analisis sebaran penjualan, 5-number summary (Boxplot), pola historis dropping vs terjual, serta korelasi fitur sebelum pemodelan."
-);
+			<section
+				class="grid-2"
+				aria-label="Distribusi serapan dan perbandingan wilayah"
+			>
+				<div class="panel">
+					<div class="panel-head">
+						<h2>
+							Bagaimana sebaran tingkat serapan (sell-through
+							rate) toko?
+						</h2>
+					</div>
+					<div class="chart-box">
+						<canvas
+							id="c-rate"
+							role="img"
+							aria-label="Histogram persentase sell-through rate"
+						></canvas>
+					</div>
+					<p class="panel-note">
+						Mayoritas outlet menyerap antara 50% hingga 80% dari
+						total barang yang dikirim setiap minggunya.
+					</p>
+				</div>
 
-if (D) {
-  // Render Tabel Boxplot
-  if (E.boxplot) {
-    const boxRows = [
-      ["Semua Outlet Model", E.boxplot.all],
-      ["Wilayah Dalam Kota", E.boxplot.dalam_kota],
-      ["Wilayah Luar Kota", E.boxplot.luar_kota]
-    ].map(([label, b]) => [
-      `<strong>${label}</strong>`,
-      `${b.min} pcs`,
-      `${b.q1} pcs`,
-      `<strong class="text-accent">${b.median} pcs</strong>`,
-      `${b.q3} pcs`,
-      `${b.max} pcs`,
-      `${b.iqr} pcs`,
-      `<strong class="text-best">${b.mean} pcs</strong>`,
-      `&gt; ${b.upper_fence} pcs`
-    ]);
+				<div class="panel">
+					<div class="panel-head">
+						<h2>
+							Bagaimana perbandingan karakteristik Dalam Kota vs
+							Luar Kota?
+						</h2>
+					</div>
+					<div class="table-wrap">
+						<table id="tb-wil"></table>
+					</div>
+					<p class="panel-note">
+						Outlet Luar Kota memiliki rata-rata penjualan dan kuota
+						pengiriman yang relatif lebih besar dibanding Dalam
+						Kota.
+					</p>
+				</div>
+			</section>
+		</main>
+		<div id="foot"></div>
+		<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+		<script src="data.js?v=636"></script>
+		<script src="common.js?v=635"></script>
+		<script>
+			layout(
+				"eda.html",
+				"2. Eksplorasi Data (EDA) Penjualan Outlet",
+				"Analisis sebaran penjualan, 5-number summary (Boxplot), pola historis dropping vs terjual, serta korelasi fitur sebelum pemodelan.",
+			);
 
-    table(
-      "tb-box",
-      ["Segmen Outlet", "Min", "Q1 (25%)", "Median (50%)", "Q3 (75%)", "Max", "IQR", "Mean (Rata-rata)", "Batas Atas Outlier"],
-      boxRows,
-      (r, i) => i === 0 ? "best" : ""
-    );
-  }
+			if (D) {
+				// Render Tabel Boxplot
+				if (E.boxplot) {
+					const boxRows = [
+						["Semua Outlet Model", E.boxplot.all],
+						["Wilayah Dalam Kota", E.boxplot.dalam_kota],
+						["Wilayah Luar Kota", E.boxplot.luar_kota],
+					].map(([label, b]) => [
+						`<strong>${label}</strong>`,
+						`${b.min} pcs`,
+						`${b.q1} pcs`,
+						`<strong class="text-accent">${b.median} pcs</strong>`,
+						`${b.q3} pcs`,
+						`${b.max} pcs`,
+						`${b.iqr} pcs`,
+						`<strong class="text-best">${b.mean} pcs</strong>`,
+						`&gt; ${b.upper_fence} pcs`,
+					]);
 
-  table(
-    "tb-wil",
-    ["Wilayah", "Total Baris", "Jumlah Outlet", "Rata-rata Terjual", "Rata-rata Dropping", "Sell-Through Rate"],
-    Object.entries(E.wilayah).map(([k, v]) => [
-      `<strong>${k}</strong>`,
-      fmt(v.n, 0),
-      fmt(v.outlet, 0),
-      `${fmt(v.terjual, 1)} pcs`,
-      `${fmt(v.jb, 1)} pcs`,
-      `<strong class="text-accent">${fmt(v.rate * 100, 1)}%</strong>`
-    ])
-  );
+					table(
+						"tb-box",
+						[
+							"Segmen Outlet",
+							"Min",
+							"Q1 (25%)",
+							"Median (50%)",
+							"Q3 (75%)",
+							"Max",
+							"IQR",
+							"Mean (Rata-rata)",
+							"Batas Atas Outlier",
+						],
+						boxRows,
+						(r, i) => (i === 0 ? "best" : ""),
+					);
+				}
 
-  let charts = [];
-  const renderCharts = () => {
-    charts.forEach(c => c && c.destroy());
-    charts = [];
-    
-    // 1. Grafik Mingguan
-    charts.push(mk("c-weekly", {
-      type: "line",
-      data: {
-        labels: E.weekly.labels,
-        datasets: [
-          { label: "Total barang di-drop", data: E.weekly.jumlah_barang, borderColor: COL.Baseline, borderDash: [5, 4], tension: 0.25 },
-          { label: "Total barang terjual", data: E.weekly.terjual, borderColor: COL.Aktual, backgroundColor: "rgba(56, 189, 248, 0.14)", fill: true, tension: 0.25 }
-        ]
-      }
-    }));
+				table(
+					"tb-wil",
+					[
+						"Wilayah",
+						"Total Baris",
+						"Jumlah Outlet",
+						"Rata-rata Terjual",
+						"Rata-rata Dropping",
+						"Sell-Through Rate",
+					],
+					Object.entries(E.wilayah).map(([k, v]) => [
+						`<strong>${k}</strong>`,
+						fmt(v.n, 0),
+						fmt(v.outlet, 0),
+						`${fmt(v.terjual, 1)} pcs`,
+						`${fmt(v.jb, 1)} pcs`,
+						`<strong class="text-accent">${fmt(v.rate * 100, 1)}%</strong>`,
+					]),
+				);
 
-    // 2. Grafik Korelasi Fitur
-    charts.push(bar("c-corr", E.corr.labels, [{
-      label: "Korelasi Pearson",
-      data: E.corr.values,
-      backgroundColor: E.corr.values.map(v => v >= 0 ? COL.Aktual : COL["Linear Regression"])
-    }], { indexAxis: "y", plugins: { legend: { display: false } } }));
+				let charts = [];
+				const renderCharts = () => {
+					charts.forEach((c) => c && c.destroy());
+					charts = [];
 
-    // 3. Histogram Sell-Through Rate
-    charts.push(bar("c-rate", E.hist_rate.labels, [{
-      label: "Jumlah Transaksi",
-      data: E.hist_rate.counts,
-      backgroundColor: COL["Random Forest"]
-    }], { plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: "Frekuensi (baris)" } }, x: { title: { display: true, text: "Rentang Tingkat Serapan (%)" } } } }));
+					// 1. Grafik Mingguan
+					charts.push(
+						mk("c-weekly", {
+							type: "line",
+							data: {
+								labels: E.weekly.labels,
+								datasets: [
+									{
+										label: "Total barang di-drop",
+										data: E.weekly.jumlah_barang,
+										borderColor: COL.Baseline,
+										borderDash: [5, 4],
+										tension: 0.25,
+									},
+									{
+										label: "Total barang terjual",
+										data: E.weekly.terjual,
+										borderColor: COL.Aktual,
+										backgroundColor:
+											"rgba(56, 189, 248, 0.14)",
+										fill: true,
+										tension: 0.25,
+									},
+								],
+							},
+						}),
+					);
 
-    // 4. Visualisasi Boxplot Sebaran Bar Range
-    if (E.boxplot) {
-      const labels = ["Semua Outlet", "Dalam Kota", "Luar Kota"];
-      const bData = [E.boxplot.all, E.boxplot.dalam_kota, E.boxplot.luar_kota];
-      const isLight = getTheme() === "light";
+					if (E.monthly) {
+						charts.push(
+							bar(
+								"c-monthly",
+								E.monthly.labels,
+								[
+									{
+										label: "Dikirim (jumlah_barang)",
+										data: E.monthly.jumlah_barang,
+										backgroundColor: COL.Aktual,
+									},
+									{
+										label: "Terjual",
+										data: E.monthly.terjual,
+										backgroundColor: COL["Random Forest"],
+									},
+									{
+										label: "Sisa",
+										data: E.monthly.sisa,
+										backgroundColor:
+											COL["Linear Regression"],
+									},
+								],
+								{
+									responsive: true,
+									maintainAspectRatio: false,
+									plugins: {
+										legend: { position: "top" },
+										tooltip: {
+											callbacks: {
+												label: (context) =>
+													`${context.dataset.label}: ${fmt(context.parsed.y, 2)} unit/dropping`,
+											},
+										},
+									},
+									scales: {
+										x: {
+											stacked: false,
+											title: {
+												display: true,
+												text: "Bulan",
+											},
+										},
+										y: {
+											stacked: false,
+											beginAtZero: true,
+											title: {
+												display: true,
+												text: "Rata-rata unit/dropping",
+											},
+										},
+									},
+								},
+							),
+						);
+					}
 
-      charts.push(mk("c-box", {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Rentang Penuh (Min - Max)",
-              data: bData.map(b => [b.min, b.max]),
-              backgroundColor: isLight ? "rgba(148, 163, 184, 0.25)" : "rgba(71, 85, 105, 0.35)",
-              barPercentage: 0.25
-            },
-            {
-              label: "Kotak Interkuartil (Q1 - Q3 / 50% Data Tengah)",
-              data: bData.map(b => [b.q1, b.q3]),
-              backgroundColor: isLight ? "rgba(2, 132, 199, 0.7)" : "rgba(56, 189, 248, 0.7)",
-              barPercentage: 0.6
-            },
-            {
-              label: "Median (Titik Tengah)",
-              data: bData.map(b => [b.median - 0.5, b.median + 0.5]),
-              backgroundColor: "#f59e0b",
-              barPercentage: 0.8
-            }
-          ]
-        },
-        options: {
-          indexAxis: "y",
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: "top", labels: { boxWidth: 12 } }
-          },
-          scales: {
-            x: {
-              title: { display: true, text: "Penjualan Barang (pcs)" },
-              beginAtZero: true
-            }
-          }
-        }
-      }));
-    }
-  };
+					// 2. Grafik Korelasi Fitur
+					charts.push(
+						bar(
+							"c-corr",
+							E.corr.labels,
+							[
+								{
+									label: "Korelasi Pearson",
+									data: E.corr.values,
+									backgroundColor: E.corr.values.map((v) =>
+										v >= 0
+											? COL.Aktual
+											: COL["Linear Regression"],
+									),
+								},
+							],
+							{
+								indexAxis: "y",
+								plugins: { legend: { display: false } },
+							},
+						),
+					);
 
-  renderCharts();
-  window.onThemeChange = renderCharts;
-}
-</script>
-</body>
+					// 3. Histogram Sell-Through Rate
+					charts.push(
+						bar(
+							"c-rate",
+							E.hist_rate.labels,
+							[
+								{
+									label: "Jumlah Transaksi",
+									data: E.hist_rate.counts,
+									backgroundColor: COL["Random Forest"],
+								},
+							],
+							{
+								plugins: { legend: { display: false } },
+								scales: {
+									y: {
+										title: {
+											display: true,
+											text: "Frekuensi (baris)",
+										},
+									},
+									x: {
+										title: {
+											display: true,
+											text: "Rentang Tingkat Serapan (%)",
+										},
+									},
+								},
+							},
+						),
+					);
+
+					// 4. Visualisasi Boxplot Sebaran Bar Range
+					if (E.boxplot) {
+						const labels = [
+							"Semua Outlet",
+							"Dalam Kota",
+							"Luar Kota",
+						];
+						const bData = [
+							E.boxplot.all,
+							E.boxplot.dalam_kota,
+							E.boxplot.luar_kota,
+						];
+						const isLight = getTheme() === "light";
+
+						charts.push(
+							mk("c-box", {
+								type: "bar",
+								data: {
+									labels,
+									datasets: [
+										{
+											label: "Rentang Penuh (Min - Max)",
+											data: bData.map((b) => [
+												b.min,
+												b.max,
+											]),
+											backgroundColor: isLight
+												? "rgba(148, 163, 184, 0.25)"
+												: "rgba(71, 85, 105, 0.35)",
+											barPercentage: 0.25,
+										},
+										{
+											label: "Kotak Interkuartil (Q1 - Q3 / 50% Data Tengah)",
+											data: bData.map((b) => [
+												b.q1,
+												b.q3,
+											]),
+											backgroundColor: isLight
+												? "rgba(2, 132, 199, 0.7)"
+												: "rgba(56, 189, 248, 0.7)",
+											barPercentage: 0.6,
+										},
+										{
+											label: "Median (Titik Tengah)",
+											data: bData.map((b) => [
+												b.median - 0.5,
+												b.median + 0.5,
+											]),
+											backgroundColor: "#f59e0b",
+											barPercentage: 0.8,
+										},
+									],
+								},
+								options: {
+									indexAxis: "y",
+									responsive: true,
+									maintainAspectRatio: false,
+									plugins: {
+										legend: {
+											position: "top",
+											labels: { boxWidth: 12 },
+										},
+									},
+									scales: {
+										x: {
+											title: {
+												display: true,
+												text: "Penjualan Barang (pcs)",
+											},
+											beginAtZero: true,
+										},
+									},
+								},
+							}),
+						);
+					}
+				};
+
+				renderCharts();
+				window.onThemeChange = renderCharts;
+			}
+		</script>
+	</body>
 </html>

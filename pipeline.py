@@ -54,7 +54,6 @@ MODELS = {
                                                    subsample=0.8, random_state=SEED),
 }
 
-
 def r(x, n=3):
     return None if x is None or (isinstance(x, float) and np.isnan(x)) else round(float(x), n)
 
@@ -396,6 +395,9 @@ def main():
     # ---------- EDA (BAB II) ----------
     weekly = df.groupby(df.tanggal_dropping.dt.to_period("W-SUN").dt.start_time).agg(
         terjual=("terjual", "sum"), jumlah_barang=("jumlah_barang", "sum"), n=("outlet_id", "count"))
+    monthly = df.groupby(df.tanggal_dropping.dt.to_period("M"))[["jumlah_barang", "terjual", "sisa"]].mean()
+    month_names = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                   "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
     wil = df.groupby("wilayah").agg(n=("outlet_id", "count"), outlet=("outlet_id", "nunique"),
                                     terjual=("terjual", "mean"), jb=("jumlah_barang", "mean"),
                                     rate=("rate", "mean"), habis=("habis", "mean"))
@@ -409,6 +411,8 @@ def main():
         "weekly": {"labels": [d.strftime("%d %b") for d in weekly.index],
                    "terjual": weekly.terjual.tolist(), "jumlah_barang": weekly.jumlah_barang.tolist(),
                    "n": weekly.n.tolist()},
+        "monthly": {"labels": [f"{month_names[d.month - 1]} {d.year}" for d in monthly.index],
+                    **{c: [r(v) for v in monthly[c]] for c in monthly.columns}},
         "wilayah": {k: {kk: r(vv) for kk, vv in v.items()} for k, v in wil.to_dict("index").items()},
         "hari": {"labels": ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"],
                  "n": [int(hari.n.get(i, 0)) for i in range(7)],
