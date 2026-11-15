@@ -16,8 +16,7 @@ from openpyxl.utils import get_column_letter
 
 BASE_DIR = Path(__file__).resolve().parent
 RAW_DIR = BASE_DIR / "data mentah"
-OUT_FILE = BASE_DIR / "dataset_siap_modeling_baru.xlsx"
-LOCK_FILE = BASE_DIR / "dataset_siap_modeling.xlsx"
+OUT_FILE = BASE_DIR / "dataset_siap_modeling.xlsx"
 REF_FILE = BASE_DIR / "referensi_487_outlet.csv"
 
 # ---------- Ekstraksi Data Mentah ----------
@@ -269,53 +268,6 @@ def table(ws, r, head, rows, widths=None, color="0F172A"):
                 c.fill = BAND_FILL
     return r + len(rows) + 2
 
-def build_ringkasan(ws, peta, full, dih):
-    n_clean = len(full)
-    n_del = len(dih)
-    lengkap = full[full.fitur_lengkap == 1]
-    n_tr = int((lengkap.split == "train").sum())
-    n_te = int((lengkap.split == "test").sum())
-
-    n_outlet_total = len(peta)
-    n_outlet_clean = full.outlet_id.nunique()
-    n_outlet_del = int(peta["status"].str.contains("dihapus").sum())
-    n_outlet_tr = full[full.split == "train"].outlet_id.nunique()
-    n_outlet_te = full[full.split == "test"].outlet_id.nunique()
-
-    title(ws, 1, "DATASET SIAP MODELING - Prediksi Penjualan Dropping Outlet", 16)
-    ws.cell(row=2, column=1, value="Periode Juni - Agustus 2026 | Alur: Data Mentah (6 file Excel) -> Dataset Siap Modeling (file ini)").font = Font(italic=True, color="475569")
-
-    r = 4
-    title(ws, r, "1. Alur Pengolahan Data (Berdasarkan Jumlah Outlet)", 12)
-    r = table(ws, r + 1, ["Tahap", "Jumlah Outlet", "Keterangan & Riwayat Transaksi"], [
-        ["Total Outlet Terdaftar (Data Mentah)", f"{n_outlet_total} outlet", f"Seluruh outlet di 6 file data mentah (total {n_clean + n_del} baris transaksi)"],
-        ["-> Outlet Dihapus / Dieliminasi", f"{n_outlet_del} outlet", f"146 di luar seleksi + 9 duplikat/ambigu + 1 outlier HB (lihat sheet 'dihapus', {n_del} baris)"],
-        ["-> Total Outlet Masuk Model (dataset_model)", f"{n_outlet_clean} outlet", f"Outlet aktif reguler siap modeling (total {n_clean} baris transaksi bersih)"],
-        ["   Data Latih (Train)", f"{n_tr} baris", f"Juni - Juli 2026: {n_outlet_tr} outlet, fitur lengkap siap training"],
-        ["   Data Uji (Test)", f"{n_te} baris", f"Agustus 2026: {n_outlet_te} outlet, evaluasi akurasi model"],
-    ])
-
-    title(ws, r, "2. Daftar Sheet", 12)
-    r = table(ws, r + 1, ["Sheet", "Isi", "Jumlah Kolom"], [
-        ["Ringkasan", "Halaman ini: alur data, daftar sheet, keterangan warna", "-"],
-        ["Kamus_Data", "Arti setiap kolom dan di sheet mana kolom tersebut dipakai", "-"],
-        ["dataset_model", "Hasil data cleaning murni (tanpa fitur tambahan)", 8],
-        ["model_lr", f"Fitur untuk Linear Regression ({len(LR)} fitur)", 5 + len(LR) + 3],
-        ["model_rf", f"Fitur untuk Random Forest ({len(RF)} fitur)", 5 + len(RF) + 3],
-        ["model_gb", f"Fitur untuk Gradient Boosting ({len(GB)} fitur)", 5 + len(GB) + 3],
-        ["dihapus", "Baris/outlet anomali, duplikat, dan outlier yang dikeluarkan dari analisis", 9],
-        ["peta_outlet_id", "Daftar seluruh outlet terdaftar beserta ID unik dan statusnya", 7],
-    ])
-
-    title(ws, r, "3. Keterangan Warna Header Kolom", 12)
-    r = table(ws, r + 1, ["Kelompok", "Arti", "Contoh Kolom"], [
-        ["Abu gelap", "Identitas (outlet_id, nama, wilayah, tanggal, minggu)", "outlet_id, nama_outlet, tanggal_dropping"],
-        ["Biru", "Transaksi aktual hasil dropping", "jumlah_barang, sisa, rate"],
-        ["Hijau", "TARGET yang diprediksi oleh model", "terjual"],
-        ["Ungu", "Fitur prediktor (lag, rolling, kalender)", "jb_lag1, terjual_lag1, terjual_roll3"],
-        ["Oranye", "Pembagi data (split train/test, penanda fitur lengkap)", "split, fitur_lengkap"],
-    ])
-
 def build_kamus(ws):
     title(ws, 1, "KAMUS DATA - Arti Setiap Kolom", 16)
     ws.cell(row=2, column=1, value="Rincian setiap kolom di seluruh sheet dataset siap modeling").font = Font(italic=True, color="475569")
@@ -364,27 +316,26 @@ def main():
     print("3. Membangun workbook Excel siap modeling...")
     wb = Workbook()
     ws = wb.active
-    ws.title = "Ringkasan"
-    build_ringkasan(ws, peta, full, dih)
-    build_kamus(wb.create_sheet("Kamus_Data"))
+    ws.title = "Kamus_Data"
+    build_kamus(ws)
     for name, df in sheets.items():
         write_df(wb.create_sheet(name), df)
     write_df(wb.create_sheet("dihapus"), dih)
     write_df(wb.create_sheet("peta_outlet_id"), peta, band_by="__none__")
     
-    tabs = {"Ringkasan": "0F172A", "Kamus_Data": "0F172A", "dataset_model": "0369A1",
+    tabs = {"Kamus_Data": "0F172A", "dataset_model": "0369A1",
             "model_lr": "6D28D9", "model_rf": "6D28D9", "model_gb": "6D28D9",
             "dihapus": "B91C1C", "peta_outlet_id": "475569"}
     for n, col in tabs.items():
         wb[n].sheet_properties.tabColor = col
     
-    wb.save(OUT_FILE)
-    print(f"   Tersimpan ke: {OUT_FILE.name}")
     try:
-        shutil.copyfile(OUT_FILE, LOCK_FILE)
-        print(f"   Berhasil disalin ke: {LOCK_FILE.name}")
+        wb.save(OUT_FILE)
+        print(f"   Tersimpan ke: {OUT_FILE.name}")
     except PermissionError:
-        print(f"   {LOCK_FILE.name} terkunci di Excel, perubahan aktif di {OUT_FILE.name}")
+        temp_out = BASE_DIR / "dataset_siap_modeling_temp.xlsx"
+        wb.save(temp_out)
+        print(f"   {OUT_FILE.name} terkunci di Excel, tersimpan ke: {temp_out.name}")
 
 if __name__ == "__main__":
     main()
